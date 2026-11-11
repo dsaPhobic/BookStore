@@ -2,8 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { GenreListComponent } from "./ui/genre-list.component";
 import { GenreModel } from "./data/genre.model";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
+import { FormControl, ReactiveFormsModule } from "@angular/forms";
 import { MatDialog } from "@angular/material/dialog";
-import { Observable, Subject, takeUntil } from "rxjs";
+import { combineLatest, map, Observable, startWith, Subject, takeUntil } from "rxjs";
 import { AddGenreDialogComponent } from "./ui/add-genre-dialog.component";
 import { Store } from "@ngrx/store";
 import {
@@ -14,18 +18,53 @@ import {
 import { HttpErrorResponse } from "@angular/common/http";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { GenreActions } from "./state/genre.actions";
+
 @Component({
   selector: "app-book",
   standalone: true,
-  imports: [GenreListComponent, MatButtonModule, NgIf, AsyncPipe],
+  imports: [
+    GenreListComponent,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    NgIf,
+    AsyncPipe,
+  ],
   template: `
-    <h1>Genres</h1>
-    <p>
-      <button mat-raised-button color="primary" (click)="onAddUpdate('Add')">
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">CATALOG ADMINISTRATION</span>
+        <h1>Manage Genres</h1>
+        <p class="page-subtitle">
+          Organize your books into clear genres for easier discovery.
+        </p>
+      </div>
+      <button
+        mat-flat-button
+        color="accent"
+        type="button"
+        (click)="onAddUpdate('Add')"
+      >
+        <mat-icon>add</mat-icon>
         Add Genre
       </button>
-    </p>
-    <ng-container *ngIf="genre$ | async as genres">
+    </div>
+
+    <div class="toolbar">
+      <mat-form-field
+        appearance="outline"
+        class="search-input"
+        subscriptSizing="dynamic"
+      >
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search genres...</mat-label>
+        <input type="text" matInput [formControl]="searchControl" />
+      </mat-form-field>
+    </div>
+
+    <ng-container *ngIf="filteredGenres$ | async as genres">
       <app-genre-list
         [genres]="genres"
         (edit)="onEdit($event)"
@@ -33,24 +72,47 @@ import { GenreActions } from "./state/genre.actions";
       />
     </ng-container>
   `,
-  styles: [``],
+  styles: [
+    `
+      .toolbar {
+        padding: 16px 20px;
+      }
+      .search-input {
+        width: 100%;
+        max-width: 440px;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GenreComponent {
   dialog = inject(MatDialog);
   destroyed$ = new Subject<boolean>();
   store = inject(Store);
+  searchControl = new FormControl<string>("");
+
   genre$: Observable<GenreModel[]> = this.store.select(selectGenres);
   loading$: Observable<boolean> = this.store.select(selectGenreLoading);
   error$: Observable<HttpErrorResponse | null> =
     this.store.select(selectGenreError);
+
+  filteredGenres$: Observable<GenreModel[]> = combineLatest([
+    this.genre$,
+    this.searchControl.valueChanges.pipe(startWith("")),
+  ]).pipe(
+    map(([genres, term]) => {
+      const q = (term ?? "").trim().toLowerCase();
+      if (!q) return genres;
+      return genres.filter((g) => g.genreName.toLowerCase().includes(q));
+    })
+  );
 
   onEdit(genre: GenreModel) {
     this.onAddUpdate("Update", genre);
   }
 
   onDelete(genre: GenreModel) {
-    if (window.confirm("Are you sure to delete?")) {
+    if (window.confirm(`Are you sure to delete "${genre.genreName}"?`)) {
       this.store.dispatch(GenreActions.deleteGenre({ id: genre.id }));
     }
   }
@@ -58,6 +120,7 @@ export class GenreComponent {
   onAddUpdate(action: string, genre: GenreModel | null = null) {
     const dialogRef = this.dialog.open(AddGenreDialogComponent, {
       data: { genre, title: action + " Genre" },
+      width: "420px",
     });
 
     dialogRef.componentInstance.submit

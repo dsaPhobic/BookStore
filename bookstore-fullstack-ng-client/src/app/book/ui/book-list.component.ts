@@ -12,7 +12,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTableModule } from "@angular/material/table";
 import { environment } from "../../../environments/environment.development";
-import { NgIf } from "@angular/common";
+import { NgFor, NgIf } from "@angular/common";
 
 @Component({
   selector: "app-book-list",
@@ -23,6 +23,7 @@ import { NgIf } from "@angular/common";
     MatIconModule,
     MatSortModule,
     NgIf,
+    NgFor,
   ],
   template: `
     <table
@@ -32,6 +33,23 @@ import { NgIf } from "@angular/common";
       (matSortChange)="sortData($event)"
       class="mat-elevation-z8"
     >
+      <ng-container matColumnDef="imageUrl">
+        <th mat-header-cell *matHeaderCellDef>Cover</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="thumb-wrap">
+            <img
+              *ngIf="element.imageUrl; else noThumb"
+              [src]="this.imageBaseUrl + element.imageUrl"
+              [alt]="element.title"
+              class="thumb-img"
+            />
+            <ng-template #noThumb>
+              <mat-icon>menu_book</mat-icon>
+            </ng-template>
+          </div>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="title">
         <th
           mat-header-cell
@@ -39,30 +57,34 @@ import { NgIf } from "@angular/common";
           mat-sort-header
           sortActionDescription="sort by title"
         >
-          Title
+          Book Title
         </th>
-        <td mat-cell *matCellDef="let element">{{ element.title }}</td>
-      </ng-container>
-      <ng-container matColumnDef="imageUrl">
-        <th mat-header-cell *matHeaderCellDef>Image</th>
         <td mat-cell *matCellDef="let element">
-          <img
-            style="height: 80px;width:100px;"
-            *ngIf="element.imageUrl"
-            [src]="this.imageBaseUrl + element.imageUrl"
-            alt="image"
-          />
+          <div class="book-title-cell">{{ element.title }}</div>
+          <div class="book-desc-cell">{{ element.description }}</div>
         </td>
       </ng-container>
 
-      <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Description</th>
-        <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+      <ng-container matColumnDef="authors">
+        <th mat-header-cell *matHeaderCellDef>Authors</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="chip-wrap">
+            <span class="chip" *ngFor="let a of element.authors">
+              {{ a.authorName }}
+            </span>
+          </div>
+        </td>
       </ng-container>
 
-      <ng-container matColumnDef="price">
-        <th mat-header-cell *matHeaderCellDef>Price</th>
-        <td mat-cell *matCellDef="let element">{{ element.price }}</td>
+      <ng-container matColumnDef="genres">
+        <th mat-header-cell *matHeaderCellDef>Genres</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="chip-wrap">
+            <span class="chip chip-accent" *ngFor="let g of element.genres">
+              {{ g.genreName }}
+            </span>
+          </div>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="publishedYear">
@@ -72,51 +94,94 @@ import { NgIf } from "@angular/common";
           mat-sort-header
           sortActionDescription="sort by published year"
         >
-          Published Year
+          Year
         </th>
         <td mat-cell *matCellDef="let element">{{ element.publishedYear }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="genres">
-        <th mat-header-cell *matHeaderCellDef>Genres</th>
-        <td mat-cell *matCellDef="let element">{{ element.genreNames }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="authors">
-        <th mat-header-cell *matHeaderCellDef>Authors</th>
-        <td mat-cell *matCellDef="let element">{{ element.authorNames }}</td>
+      <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef>Price</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="price">\${{ element.price }}</span>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Action</th>
-        <td
-          mat-cell
-          *matCellDef="let book"
-          style="display: flex;gap:5px;padding:5px;align-items:center;"
-        >
-          <button
-            type="button"
-            (click)="edit.emit(book)"
-            mat-mini-fab
-            color="secondary"
-          >
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button
-            type="button"
-            (click)="delete.emit(book)"
-            mat-mini-fab
-            color="warn"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let book">
+          <div class="action-cell">
+            <button
+              type="button"
+              (click)="edit.emit(book)"
+              mat-mini-fab
+              title="Edit book"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              type="button"
+              (click)="delete.emit(book)"
+              mat-mini-fab
+              color="warn"
+              title="Delete book"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </td>
       </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedCoulumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedCoulumns"></tr>
     </table>
   `,
-  styles: [],
+  styles: [
+    `
+      .thumb-wrap {
+        width: 48px;
+        height: 64px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--bs-surface-2);
+        border: 1px solid var(--bs-border);
+        display: grid;
+        place-items: center;
+        margin: 8px 0;
+      }
+
+      .thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .book-title-cell {
+        font-weight: 600;
+        color: var(--bs-ink-dark);
+      }
+
+      .book-desc-cell {
+        font-size: 12.5px;
+        color: var(--bs-muted);
+        max-width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .chip-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .action-cell {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookListComponent {
@@ -127,13 +192,12 @@ export class BookListComponent {
   imageBaseUrl = environment.baseUrl + "/resources/";
 
   displayedCoulumns = [
-    "title",
     "imageUrl",
-    "description",
-    "price",
-    "publishedYear",
+    "title",
     "authors",
     "genres",
+    "publishedYear",
+    "price",
     "actions",
   ];
 

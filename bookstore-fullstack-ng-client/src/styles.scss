@@ -1,9 +1,448 @@
+@use "@angular/material" as mat;
+
+/* =========================================================
+   1. ANGULAR MATERIAL THEME (custom palette)
+   ========================================================= */
+
+$ink-palette: (
+  50: #e9ebf2,
+  100: #c8cde0,
+  200: #a3abcb,
+  300: #7e89b5,
+  400: #626fa5,
+  500: #465696,
+  600: #3e4d8a,
+  700: #33417a,
+  800: #29356a,
+  900: #1a234d,
+  A100: #a9b5ff,
+  A200: #7688ff,
+  A400: #435bff,
+  A700: #2a45ff,
+  contrast: (
+    50: rgba(0, 0, 0, 0.87),
+    100: rgba(0, 0, 0, 0.87),
+    200: rgba(0, 0, 0, 0.87),
+    300: white,
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(0, 0, 0, 0.87),
+    A200: white,
+    A400: white,
+    A700: white,
+  ),
+);
+
+$coral-palette: (
+  50: #fdeee9,
+  100: #fad4c8,
+  200: #f6b8a4,
+  300: #f19b7f,
+  400: #ed8564,
+  500: #e76f51,
+  600: #d9654a,
+  700: #c55840,
+  800: #b14c37,
+  900: #8f3826,
+  A100: #ffd9cf,
+  A200: #ffb19c,
+  A400: #ff8a69,
+  A700: #ff764f,
+  contrast: (
+    50: rgba(0, 0, 0, 0.87),
+    100: rgba(0, 0, 0, 0.87),
+    200: rgba(0, 0, 0, 0.87),
+    300: rgba(0, 0, 0, 0.87),
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(0, 0, 0, 0.87),
+    A200: rgba(0, 0, 0, 0.87),
+    A400: white,
+    A700: white,
+  ),
+);
+
+$app-primary: mat.m2-define-palette($ink-palette, 800, 500, 900);
+$app-accent: mat.m2-define-palette($coral-palette, 500, 300, 700);
+$app-warn: mat.m2-define-palette(mat.$m2-red-palette, 600);
+
+$app-typography: mat.m2-define-typography-config(
+  $font-family: "'Inter', 'Roboto', 'Helvetica Neue', sans-serif",
+);
+
+$app-theme: mat.m2-define-light-theme(
+  (
+    color: (
+      primary: $app-primary,
+      accent: $app-accent,
+      warn: $app-warn,
+    ),
+    typography: $app-typography,
+    density: 0,
+  )
+);
+
+@include mat.core();
+@include mat.all-component-themes($app-theme);
+@include mat.typography-hierarchy($app-typography);
+
+@import "../node_modules/@ng-select/ng-select/themes/material.theme.css";
+
+/* =========================================================
+   2. DESIGN TOKENS
+   ========================================================= */
+
+:root {
+  --bs-bg: #f7f5f0;
+  --bs-surface: #ffffff;
+  --bs-surface-2: #faf8f4;
+  --bs-ink: #29356a;
+  --bs-ink-dark: #1a234d;
+  --bs-ink-soft: #e9ebf2;
+  --bs-accent: #e76f51;
+  --bs-accent-soft: #fdeee9;
+  --bs-text: #1f2433;
+  --bs-muted: #6b7083;
+  --bs-border: #e8e4da;
+  --bs-success: #2e9e6a;
+  --bs-success-soft: #e3f5ec;
+  --bs-radius-sm: 8px;
+  --bs-radius: 14px;
+  --bs-radius-lg: 22px;
+  --bs-shadow-sm: 0 1px 2px rgba(26, 35, 77, 0.06);
+  --bs-shadow: 0 6px 24px rgba(26, 35, 77, 0.08);
+  --bs-shadow-lg: 0 18px 48px rgba(26, 35, 77, 0.14);
+  --bs-font-heading: "Playfair Display", Georgia, serif;
+  --bs-container: 1240px;
+
+  /* Material (MDC) shape tokens */
+  --mdc-protected-button-container-shape: 10px;
+  --mdc-filled-button-container-shape: 10px;
+  --mdc-outlined-button-container-shape: 10px;
+  --mdc-text-button-container-shape: 10px;
+  --mdc-outlined-text-field-container-shape: 10px;
+  --mdc-filled-text-field-container-shape: 10px;
+  --mdc-dialog-container-shape: 20px;
+  --mdc-elevated-card-container-shape: 16px;
+  --mdc-outlined-card-container-shape: 16px;
+  --mdc-snackbar-container-shape: 12px;
+  --mat-menu-container-shape: 12px;
+  --mat-select-container-elevation-shadow: var(--bs-shadow);
+  --mdc-protected-button-container-elevation: none;
+  --mdc-protected-button-hover-container-elevation: 0 4px 14px rgba(26, 35, 77, 0.18);
+}
+
+/* =========================================================
+   3. BASE
+   ========================================================= */
+
 html,
 body {
   height: 100%;
 }
+
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: "Inter", "Roboto", "Helvetica Neue", sans-serif;
+  background: var(--bs-bg);
+  color: var(--bs-text);
+  -webkit-font-smoothing: antialiased;
 }
-@import "../node_modules/@ng-select/ng-select/themes/material.theme.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--bs-font-heading);
+  color: var(--bs-ink-dark);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--bs-ink);
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Routed pages get a centered container (home handles its own layout) */
+app-root .content > :not(router-outlet):not(app-home) {
+  display: block;
+  width: 100%;
+  max-width: var(--bs-container);
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+
+/* Default page title styling for pages that use a bare <h1>/<h2> */
+app-root .content > :not(router-outlet) > h1:first-child,
+app-root .content > :not(router-outlet) > h2:first-child {
+  font-size: 32px;
+  margin: 0 0 24px;
+}
+
+/* =========================================================
+   4. REUSABLE UTILITIES
+   ========================================================= */
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 32px;
+  }
+
+  .page-subtitle {
+    margin: 6px 0 0;
+    color: var(--bs-muted);
+    font-size: 15px;
+  }
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bs-accent);
+}
+
+.surface-card {
+  background: var(--bs-surface);
+  border: 1px solid var(--bs-border);
+  border-radius: var(--bs-radius);
+  box-shadow: var(--bs-shadow-sm);
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 0;
+  margin-bottom: 16px;
+  background: var(--bs-surface);
+  border: 1px solid var(--bs-border);
+  border-radius: var(--bs-radius);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--bs-muted);
+
+  .mat-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 56px;
+    color: var(--bs-border);
+  }
+
+  h3 {
+    margin: 12px 0 6px;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bs-ink-soft);
+  color: var(--bs-ink);
+  white-space: nowrap;
+}
+
+.chip-accent {
+  background: var(--bs-accent-soft);
+  color: var(--bs-accent);
+}
+
+.price {
+  font-weight: 700;
+  color: var(--bs-ink-dark);
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+/* =========================================================
+   5. MATERIAL COMPONENT POLISH
+   ========================================================= */
+
+/* Tables */
+.mat-mdc-table {
+  background: var(--bs-surface) !important;
+  border: 1px solid var(--bs-border);
+  border-radius: var(--bs-radius);
+  overflow: hidden;
+  width: 100%;
+}
+
+.mat-mdc-table.mat-elevation-z8,
+.mat-elevation-z8 {
+  box-shadow: var(--bs-shadow-sm) !important;
+}
+
+.mat-mdc-header-row {
+  background: var(--bs-surface-2);
+}
+
+.mat-mdc-header-cell {
+  font-size: 12px;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bs-muted);
+  border-bottom-color: var(--bs-border) !important;
+}
+
+.mat-mdc-cell {
+  color: var(--bs-text);
+  border-bottom-color: var(--bs-border) !important;
+}
+
+.mat-mdc-row {
+  transition: background 0.15s ease;
+}
+
+.mat-mdc-row:hover {
+  background: #fbfaf7;
+}
+
+.mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: none;
+}
+
+/* Table action buttons: softer mini fabs */
+.mat-mdc-cell .mat-mdc-mini-fab {
+  box-shadow: none !important;
+  width: 36px;
+  height: 36px;
+}
+
+.mat-mdc-cell .mat-mdc-mini-fab:not(.mat-warn) {
+  background: var(--bs-ink-soft);
+  color: var(--bs-ink);
+}
+
+.mat-mdc-cell .mat-mdc-mini-fab.mat-warn {
+  background: #fdecec;
+  color: #d32f2f;
+}
+
+/* Paginator */
+.mat-mdc-paginator {
+  background: transparent !important;
+  margin-top: 8px;
+}
+
+/* Buttons */
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button {
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+}
+
+/* Form fields */
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--bs-border);
+  --mdc-outlined-text-field-hover-outline-color: #c9c3b4;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: var(--bs-surface-2) !important;
+}
+
+/* Dialogs */
+.mat-mdc-dialog-container .mdc-dialog__title {
+  font-family: var(--bs-font-heading) !important;
+  font-size: 24px !important;
+  color: var(--bs-ink-dark) !important;
+  padding-top: 24px !important;
+}
+
+.mat-mdc-dialog-actions {
+  gap: 8px;
+  padding: 12px 24px 20px !important;
+}
+
+/* Cards */
+.mat-mdc-card {
+  border-radius: var(--bs-radius) !important;
+}
+
+/* Snack bar */
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: var(--bs-ink-dark);
+  --mat-snack-bar-button-color: #ffb19c;
+}
+
+/* Menus */
+.mat-mdc-menu-panel {
+  border: 1px solid var(--bs-border);
+  box-shadow: var(--bs-shadow-lg) !important;
+}
+
+.mat-mdc-menu-item .mat-icon {
+  color: var(--bs-muted);
+}
+
+/* ng-select (used in book dialog) */
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+  background-color: var(--bs-ink-soft) !important;
+  color: var(--bs-ink) !important;
+  border-radius: 999px !important;
+}
+
+/* =========================================================
+   6. RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 720px) {
+  app-root .content > :not(router-outlet):not(app-home) {
+    padding: 20px 14px 40px;
+  }
+
+  .page-header h1,
+  app-root .content > :not(router-outlet) > h1:first-child {
+    font-size: 26px;
+  }
+
+  .mat-mdc-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

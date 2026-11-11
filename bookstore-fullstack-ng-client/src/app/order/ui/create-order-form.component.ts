@@ -14,6 +14,8 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { NgFor, NgIf } from "@angular/common";
 import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { RouterModule } from "@angular/router";
 
 @Component({
   selector: "app-create-order-form",
@@ -23,15 +25,18 @@ import { MatButtonModule } from "@angular/material/button";
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
+    MatIconModule,
+    RouterModule,
     NgIf,
     NgFor,
     MatSelectModule,
   ],
   template: `
-    <div class="order-form-container">
+    <div class="checkout-card surface-card">
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="fill">
-          <mat-label>Name</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>person_outline</mat-icon>
+          <mat-label>Recipient Full Name</mat-label>
           <input matInput formControlName="name" />
           <mat-error
             *ngIf="f['name'].invalid && (f['name'].dirty || f['name'].touched)"
@@ -40,8 +45,9 @@ import { MatButtonModule } from "@angular/material/button";
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Email</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>mail_outline</mat-icon>
+          <mat-label>Email for Order Confirmation</mat-label>
           <input matInput formControlName="email" />
           <mat-error
             *ngIf="
@@ -49,13 +55,14 @@ import { MatButtonModule } from "@angular/material/button";
             "
           >
             <span *ngIf="f['email'].errors?.['required']"
-              >Email is required</span
+              >Valid email is required</span
             >
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Mobile No.</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>phone</mat-icon>
+          <mat-label>Mobile Number</mat-label>
           <input matInput formControlName="mobileNumber" />
           <mat-error
             *ngIf="
@@ -64,13 +71,14 @@ import { MatButtonModule } from "@angular/material/button";
             "
           >
             <span *ngIf="f['mobileNumber'].errors?.['required']"
-              >Email is required</span
+              >Mobile number is required</span
             >
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Payment method</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>payments</mat-icon>
+          <mat-label>Payment Method</mat-label>
           <mat-select formControlName="paymentMethod">
             <mat-option value="">Select Payment Method</mat-option>
             <mat-option *ngFor="let pm of paymentMethods" [value]="pm.value">{{
@@ -84,31 +92,56 @@ import { MatButtonModule } from "@angular/material/button";
             "
           >
             <span *ngIf="f['paymentMethod'].errors?.['required']"
-              >Email is required</span
+              >Payment method is required</span
             >
           </mat-error>
         </mat-form-field>
 
-        <div class="btn-container">
-          <button [disabled]="form.invalid" mat-raised-button color="primary">
-            Checkout
+        <div class="btn-row">
+          <a mat-stroked-button routerLink="/cart">Back to Cart</a>
+          <button
+            [disabled]="form.invalid"
+            mat-flat-button
+            color="accent"
+            class="place-btn"
+          >
+            <mat-icon>check_circle</mat-icon>
+            Place Order
           </button>
         </div>
       </form>
     </div>
   `,
-  styles: `
-   form {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
+  styles: [
+    `
+      .checkout-card {
+        max-width: 540px;
+        padding: 28px;
       }
 
-      .registration-form-container {
-        width: 100%;
-        height: 100%;
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
-  `,
+
+      mat-form-field {
+        width: 100%;
+      }
+
+      .btn-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .place-btn {
+        height: 44px !important;
+        padding: 0 24px !important;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateOrderFormComponent {

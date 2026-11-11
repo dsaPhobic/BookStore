@@ -3,7 +3,6 @@ import {
   Component,
   EventEmitter,
   inject,
-  Input,
   Output,
 } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
@@ -11,6 +10,7 @@ import { RegistrationModel } from "../data/registration.model";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatButtonModule } from "@angular/material/button";
 import { MatInputModule } from "@angular/material/input";
+import { MatIconModule } from "@angular/material/icon";
 import { NgIf } from "@angular/common";
 import { MustMatch } from "../../helpers/must-match.validator";
 import { validPattern } from "../../helpers/pattern.validator";
@@ -23,25 +23,26 @@ import { validPattern } from "../../helpers/pattern.validator";
     MatFormFieldModule,
     MatButtonModule,
     MatInputModule,
+    MatIconModule,
     NgIf,
   ],
   template: `
     <div class="registration-form-container">
       <form [formGroup]="registrationForm" (ngSubmit)="submit()">
-        <mat-form-field appearance="fill">
-          <mat-label>Name</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>person_outline</mat-icon>
+          <mat-label>Full Name</mat-label>
           <input matInput formControlName="name" />
           <mat-error
             *ngIf="f['name'].invalid && (f['name'].dirty || f['name'].touched)"
           >
-            <span *ngIf="f['name'].errors?.['required']">
-              Name is required
-            </span>
+            <span *ngIf="f['name'].errors?.['required']">Name is required</span>
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Email</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>mail_outline</mat-icon>
+          <mat-label>Email Address</mat-label>
           <input matInput formControlName="email" />
           <mat-error
             *ngIf="
@@ -55,7 +56,8 @@ import { validPattern } from "../../helpers/pattern.validator";
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>lock_outline</mat-icon>
           <mat-label>Password</mat-label>
           <input type="password" matInput formControlName="password" />
           <mat-error
@@ -68,39 +70,39 @@ import { validPattern } from "../../helpers/pattern.validator";
               Password is required
             </span>
             <span *ngIf="f['password'].errors?.['invalidPattern']">
-              Password should be atleast 6 character long, contains atleas 1
-              uppercase,1 lowercase,1 number,1 speacial character
+              Min 6 chars with uppercase, lowercase, number, and symbol
             </span>
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Password Confirm</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>verified_user</mat-icon>
+          <mat-label>Confirm Password</mat-label>
           <input type="password" matInput formControlName="passwordConfirm" />
-        </mat-form-field>
-        <mat-error
-          *ngIf="
-            f['passwordConfirm'].invalid &&
-            (f['passwordConfirm'].dirty || f['passwordConfirm'].touched)
-          "
-        >
-          <span *ngIf="f['passwordConfirm'].errors?.['required']">
-            Password confirm is required
-          </span>
-          <span *ngIf="f['passwordConfirm'].errors?.['mustMatch']">
-            Password and password confirm must match
-          </span>
-        </mat-error>
-
-        <div class="btn-container">
-          <button
-            [disabled]="registrationForm.invalid"
-            mat-raised-button
-            color="primary"
+          <mat-error
+            *ngIf="
+              f['passwordConfirm'].invalid &&
+              (f['passwordConfirm'].dirty || f['passwordConfirm'].touched)
+            "
           >
-            Signup
-          </button>
-        </div>
+            <span *ngIf="f['passwordConfirm'].errors?.['required']">
+              Password confirm is required
+            </span>
+            <span *ngIf="f['passwordConfirm'].errors?.['mustMatch']">
+              Passwords must match
+            </span>
+          </mat-error>
+        </mat-form-field>
+
+        <button
+          [disabled]="registrationForm.invalid"
+          mat-flat-button
+          color="primary"
+          class="submit-btn"
+        >
+          <mat-icon>person_add</mat-icon>
+          Create Account
+        </button>
       </form>
     </div>
   `,
@@ -109,12 +111,17 @@ import { validPattern } from "../../helpers/pattern.validator";
       form {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 10px;
       }
 
-      .registration-form-container {
+      mat-form-field {
         width: 100%;
-        height: 100%;
+      }
+
+      .submit-btn {
+        width: 100%;
+        height: 46px !important;
+        margin-top: 6px;
       }
     `,
   ],
@@ -126,7 +133,7 @@ export class RegistrationFormComponet {
 
   patternRegex = new RegExp(
     "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*[#$^+=!*()@%&]).{6,}$"
-  ); // must contain 6 letters, 1 uppercase, 1 lowercase, 1 number and 1 special character
+  );
   registrationForm = this.fb.group(
     {
       name: ["", Validators.required],

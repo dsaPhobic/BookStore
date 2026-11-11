@@ -15,6 +15,9 @@ import { UserOrderListComponent } from "./ui/user-order-list.component";
 import { PageSelectorModel } from "../common/page-selector.model";
 import { UserOrderPaginatorComponent } from "./ui/user-order-paginator.component";
 import { UserOrderFilter } from "./ui/user-order-filter.component";
+import { MatIconModule } from "@angular/material/icon";
+import { MatButtonModule } from "@angular/material/button";
+import { RouterModule } from "@angular/router";
 
 @Component({
   selector: "app-user-order",
@@ -25,26 +28,64 @@ import { UserOrderFilter } from "./ui/user-order-filter.component";
     UserOrderListComponent,
     UserOrderPaginatorComponent,
     UserOrderFilter,
+    MatIconModule,
+    MatButtonModule,
+    RouterModule,
   ],
   template: `
-    <h1>My Orders</h1>
-    <app-user-order-filter
-      (filterByPurchaseDate)="handleFilterByPurchaseDate($event)"
-      (onSearch)="handleOnSearch($event)"
-      (clearFilter)="handleClearFilter()"
-    />
-    <ng-container *ngIf="myOrders$ | async as orders">
-      <app-user-order-list [userOrders]="orders" />
-    </ng-container>
+    <div class="orders-page bs-fade-in">
+      <div class="bs-page-header">
+        <div>
+          <span class="bs-badge bs-badge--primary" style="margin-bottom: 8px">
+            <mat-icon style="font-size: 14px; width: 14px; height: 14px">
+              receipt_long
+            </mat-icon>
+            Purchase History
+          </span>
+          <h1 class="bs-page-title">My Orders</h1>
+          <p class="bs-page-subtitle">
+            Track your purchased books, order dates, and itemized pricing.
+          </p>
+        </div>
+        <a mat-flat-button color="primary" routerLink="/books">
+          <mat-icon>storefront</mat-icon>
+          Browse More Books
+        </a>
+      </div>
 
-    <ng-container *ngIf="totalCount$ | async as totalCount">
-      <app-user-order-paginator
-        (pageSelect)="onPageSelect($event)"
-        [totalRecords]="totalCount"
+      <app-user-order-filter
+        (filterByPurchaseDate)="handleFilterByPurchaseDate($event)"
+        (onSearch)="handleOnSearch($event)"
+        (clearFilter)="handleClearFilter()"
       />
-    </ng-container>
+
+      <ng-container *ngIf="myOrders$ | async as orders">
+        <div *ngIf="orders.length === 0" class="bs-empty-state">
+          <div class="bs-empty-state__icon">
+            <mat-icon>shopping_bag</mat-icon>
+          </div>
+          <div class="bs-empty-state__title">No orders found</div>
+          <p class="bs-empty-state__text">
+            You haven't placed any orders matching this filter yet.
+          </p>
+          <a mat-flat-button color="primary" routerLink="/books">
+            Explore Catalog
+          </a>
+        </div>
+
+        <div class="bs-table-shell" *ngIf="orders.length > 0">
+          <app-user-order-list [userOrders]="orders" />
+          <ng-container *ngIf="totalCount$ | async as totalCount">
+            <app-user-order-paginator
+              (pageSelect)="onPageSelect($event)"
+              [totalRecords]="totalCount"
+            />
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
   `,
-  styles: ``,
+  styles: [``],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserOrderComponent {

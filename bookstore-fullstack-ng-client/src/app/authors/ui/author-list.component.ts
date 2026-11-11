@@ -31,41 +31,74 @@ import { MatSortModule, Sort } from "@angular/material/sort";
           mat-sort-header
           sortActionDescription="sort by author name"
         >
-          Author
+          Author Name
         </th>
-        <td mat-cell *matCellDef="let element">{{ element.authorName }}</td>
+        <td mat-cell *matCellDef="let element">
+          <div class="author-cell">
+            <span class="author-badge">
+              {{ element.authorName?.charAt(0) || "A" }}
+            </span>
+            <strong>{{ element.authorName }}</strong>
+          </div>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="Action">
-        <th mat-header-cell *matHeaderCellDef>Action</th>
-        <td
-          mat-cell
-          *matCellDef="let author"
-          style="display: flex;gap:5px;padding:5px;align-items:center;"
-        >
-          <button
-            type="button"
-            (click)="edit.emit(author)"
-            mat-mini-fab
-            color="secondary"
-          >
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button
-            type="button"
-            (click)="delete.emit(author)"
-            mat-mini-fab
-            color="warn"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let author">
+          <div class="action-cell">
+            <button
+              type="button"
+              (click)="edit.emit(author)"
+              mat-mini-fab
+              title="Edit author"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              type="button"
+              (click)="delete.emit(author)"
+              mat-mini-fab
+              color="warn"
+              title="Delete author"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </td>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
   `,
-  styles: [``],
+  styles: [
+    `
+      .author-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .author-badge {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--bs-ink-soft);
+        color: var(--bs-ink);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      .action-cell {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthorListComponent {

@@ -8,6 +8,8 @@ import {
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
+import { MatMenuModule } from "@angular/material/menu";
+import { MatDividerModule } from "@angular/material/divider";
 import { RouterModule } from "@angular/router";
 import { NgIf } from "@angular/common";
 import { MatBadgeModule } from "@angular/material/badge";
@@ -22,104 +24,376 @@ import { User } from "./account/data/user.model";
     MatButtonModule,
     MatIconModule,
     MatBadgeModule,
+    MatMenuModule,
+    MatDividerModule,
     NgIf,
   ],
   template: `
-    <p>
-      <mat-toolbar color="primary">
-        <span routerLink="/home">Book Store 📔</span>
-        <span class="example-spacer"></span>
-        <button mat-button routerLink="/home" routerLinkActive="active">
-          Home
-        </button>
-        <button mat-button routerLink="/books" routerLinkActive="active">
-          Books
-        </button>
-        <ng-container *ngIf="isLoggedIn; else notLoggedIn">
-          <button mat-button routerLink="/dashboard" routerLinkActive="active">
-            Dashboard
-          </button>
-          <button mat-button routerLink="/my-orders" routerLinkActive="active">
-            My Orders
-          </button>
-          <!-- admin routes start -->
-          <ng-container *ngIf="isInRole(['Admin'])">
+    <header class="site-header">
+      <div class="header-inner">
+        <!-- Brand -->
+        <a class="brand" routerLink="/home">
+          <span class="brand-mark"><mat-icon>auto_stories</mat-icon></span>
+          <span class="brand-name">Book<span>Store</span></span>
+        </a>
+
+        <!-- Primary navigation (desktop) -->
+        <nav class="nav-links">
+          <a routerLink="/home" routerLinkActive="active">Home</a>
+          <a routerLink="/books" routerLinkActive="active">Books</a>
+          <ng-container *ngIf="isLoggedIn">
+            <a routerLink="/my-orders" routerLinkActive="active">My Orders</a>
             <button
-              mat-button
-              routerLink="/manage-books"
-              routerLinkActive="active"
+              *ngIf="isInRole(['Admin'])"
+              class="nav-menu-trigger"
+              [matMenuTriggerFor]="adminMenu"
             >
-              Manage-Books
-            </button>
-
-            <button mat-button routerLink="/genres" routerLinkActive="active">
-              Manage-Genres
-            </button>
-
-            <button mat-button routerLink="/authors" routerLinkActive="active">
-              Manage-Authors
-            </button>
-
-            <button
-              mat-button
-              routerLink="/customer-order"
-              routerLinkActive="active"
-            >
-              Customer Order
+              Manage <mat-icon>expand_more</mat-icon>
             </button>
           </ng-container>
-          <!-- admin routes ends -->
+        </nav>
 
-          <button mat-icon-button color="secondary">
+        <span class="spacer"></span>
+
+        <!-- Right actions -->
+        <ng-container *ngIf="isLoggedIn; else guestActions">
+          <a
+            mat-icon-button
+            class="icon-action"
+            routerLink="/cart"
+            aria-label="Cart"
+          >
             <mat-icon
               [matBadge]="cartCount"
-              matBadgePosition="above after"
+              [matBadgeHidden]="!cartCount"
               matBadgeColor="accent"
-              routerLink="/cart"
+              matBadgeSize="small"
+              >shopping_bag</mat-icon
             >
-              shopping_cart
-            </mat-icon>
-          </button>
+          </a>
 
-          <button mat-button (click)="logout.emit()">Logout</button>
+          <button class="user-chip" [matMenuTriggerFor]="userMenu">
+            <span class="avatar">{{ initial }}</span>
+            <span class="user-name">{{ user?.username }}</span>
+            <mat-icon>expand_more</mat-icon>
+          </button>
         </ng-container>
 
-        <ng-template #notLoggedIn>
-          <button mat-button routerLink="/login" routerLinkActive="active">
-            Login
-          </button>
-          <button mat-button routerLink="/signup">Signup</button>
+        <ng-template #guestActions>
+          <div class="guest-actions">
+            <a mat-button routerLink="/login">Log in</a>
+            <a mat-flat-button color="accent" routerLink="/signup">Sign up</a>
+          </div>
         </ng-template>
 
-        <a
-          href="https://github.com/rd003/BookStoreFullStackNg"
-          target="_blank"
+        <!-- Mobile menu trigger -->
+        <button
           mat-icon-button
-          class="example-icon favorite-icon"
-          aria-label="Example icon-button with heart icon"
+          class="mobile-trigger"
+          [matMenuTriggerFor]="mobileMenu"
+          aria-label="Menu"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-            />
-          </svg>
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- Admin menu -->
+    <mat-menu #adminMenu="matMenu" xPosition="after">
+      <a mat-menu-item routerLink="/manage-books">
+        <mat-icon>menu_book</mat-icon><span>Books</span>
+      </a>
+      <a mat-menu-item routerLink="/authors">
+        <mat-icon>person_outline</mat-icon><span>Authors</span>
+      </a>
+      <a mat-menu-item routerLink="/genres">
+        <mat-icon>category</mat-icon><span>Genres</span>
+      </a>
+      <mat-divider></mat-divider>
+      <a mat-menu-item routerLink="/customer-order">
+        <mat-icon>receipt_long</mat-icon><span>Customer Orders</span>
+      </a>
+    </mat-menu>
+
+    <!-- User menu -->
+    <mat-menu #userMenu="matMenu" xPosition="before">
+      <div class="menu-user-info">
+        <div class="avatar avatar-lg">{{ initial }}</div>
+        <div>
+          <div class="menu-user-name">{{ user?.username }}</div>
+          <div class="menu-user-role">
+            {{ isInRole(["Admin"]) ? "Administrator" : "Customer" }}
+          </div>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <a mat-menu-item routerLink="/dashboard">
+        <mat-icon>space_dashboard</mat-icon><span>Dashboard</span>
+      </a>
+      <a mat-menu-item routerLink="/my-orders">
+        <mat-icon>local_shipping</mat-icon><span>My Orders</span>
+      </a>
+      <a mat-menu-item routerLink="/cart">
+        <mat-icon>shopping_bag</mat-icon><span>Cart ({{ cartCount }})</span>
+      </a>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout.emit()">
+        <mat-icon>logout</mat-icon><span>Log out</span>
+      </button>
+    </mat-menu>
+
+    <!-- Mobile menu -->
+    <mat-menu #mobileMenu="matMenu" xPosition="before">
+      <a mat-menu-item routerLink="/home">
+        <mat-icon>home</mat-icon><span>Home</span>
+      </a>
+      <a mat-menu-item routerLink="/books">
+        <mat-icon>auto_stories</mat-icon><span>Books</span>
+      </a>
+      <ng-container *ngIf="isLoggedIn; else mobileGuest">
+        <a mat-menu-item routerLink="/my-orders">
+          <mat-icon>local_shipping</mat-icon><span>My Orders</span>
         </a>
-      </mat-toolbar>
-    </p>
+        <a mat-menu-item routerLink="/cart">
+          <mat-icon>shopping_bag</mat-icon><span>Cart ({{ cartCount }})</span>
+        </a>
+        <ng-container *ngIf="isInRole(['Admin'])">
+          <mat-divider></mat-divider>
+          <a mat-menu-item routerLink="/manage-books">
+            <mat-icon>menu_book</mat-icon><span>Manage Books</span>
+          </a>
+          <a mat-menu-item routerLink="/authors">
+            <mat-icon>person_outline</mat-icon><span>Manage Authors</span>
+          </a>
+          <a mat-menu-item routerLink="/genres">
+            <mat-icon>category</mat-icon><span>Manage Genres</span>
+          </a>
+          <a mat-menu-item routerLink="/customer-order">
+            <mat-icon>receipt_long</mat-icon><span>Customer Orders</span>
+          </a>
+        </ng-container>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout.emit()">
+          <mat-icon>logout</mat-icon><span>Log out</span>
+        </button>
+      </ng-container>
+      <ng-template #mobileGuest>
+        <mat-divider></mat-divider>
+        <a mat-menu-item routerLink="/login">
+          <mat-icon>login</mat-icon><span>Log in</span>
+        </a>
+        <a mat-menu-item routerLink="/signup">
+          <mat-icon>person_add</mat-icon><span>Sign up</span>
+        </a>
+      </ng-template>
+    </mat-menu>
   `,
   styles: [
     `
-      .example-spacer {
+      :host {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: block;
+      }
+
+      .site-header {
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: saturate(180%) blur(12px);
+        border-bottom: 1px solid var(--bs-border);
+      }
+
+      .header-inner {
+        max-width: var(--bs-container);
+        margin: 0 auto;
+        height: 68px;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, var(--bs-ink) 0%, #465696 100%);
+        color: #fff;
+        box-shadow: 0 6px 16px rgba(41, 53, 106, 0.25);
+      }
+
+      .brand-mark .mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .brand-name {
+        font-family: var(--bs-font-heading);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--bs-ink-dark);
+      }
+
+      .brand-name span {
+        color: var(--bs-accent);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .nav-links a,
+      .nav-menu-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--bs-muted);
+        text-decoration: none;
+        cursor: pointer;
+        transition: color 0.15s ease, background 0.15s ease;
+      }
+
+      .nav-links a:hover,
+      .nav-menu-trigger:hover {
+        color: var(--bs-ink-dark);
+        background: var(--bs-surface-2);
+      }
+
+      .nav-links a.active {
+        color: var(--bs-ink-dark);
+        background: var(--bs-ink-soft);
+      }
+
+      .nav-menu-trigger .mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .spacer {
         flex: 1 1 auto;
       }
 
-      .active {
-        background: #003a85;
+      .icon-action {
+        color: var(--bs-ink-dark);
+      }
+
+      .guest-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px 4px 4px;
+        border: 1px solid var(--bs-border);
+        border-radius: 999px;
+        background: var(--bs-surface);
+        font: inherit;
+        cursor: pointer;
+        transition: box-shadow 0.15s ease;
+      }
+
+      .user-chip:hover {
+        box-shadow: var(--bs-shadow-sm);
+      }
+
+      .user-chip .mat-icon {
+        color: var(--bs-muted);
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--bs-ink-dark);
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--bs-accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      .avatar-lg {
+        width: 42px;
+        height: 42px;
+        font-size: 17px;
+      }
+
+      .menu-user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        min-width: 220px;
+      }
+
+      .menu-user-name {
+        font-weight: 600;
+        color: var(--bs-ink-dark);
+      }
+
+      .menu-user-role {
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+
+      .mobile-trigger {
+        display: none;
+      }
+
+      @media (max-width: 900px) {
+        .nav-links,
+        .guest-actions,
+        .user-name {
+          display: none;
+        }
+
+        .mobile-trigger {
+          display: inline-flex;
+        }
+
+        .header-inner {
+          gap: 12px;
+          padding: 0 14px;
+        }
       }
     `,
   ],
@@ -130,6 +404,10 @@ export class HeaderComponent {
   @Input({ required: true }) isLoggedIn: boolean = false;
   @Input({ required: true }) user!: User | null;
   @Input({ required: true }) cartCount = 0;
+
+  get initial(): string {
+    return (this.user?.username ?? "?").charAt(0);
+  }
 
   isInRole(requiredRoles: string[]) {
     const roles = this.user?.roles;
