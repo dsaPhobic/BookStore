@@ -64,6 +64,17 @@ public static class AuthSeeder
                 await bookContext.Database.MigrateAsync();
             }
 
+            // The demo admin account only exists in the Identity database. The
+            // order/cart APIs resolve the application user by username from
+            // BookStore.db, so a matching row must exist or requests such as
+            // GET /api/orders/my-orders fail with "User is not logged in".
+            var adminUserName = admin.Email!;
+            if (!await bookContext.Users.AnyAsync(u => u.Username == adminUserName))
+            {
+                bookContext.Users.Add(new User { Name = "Admin", Username = adminUserName });
+                await bookContext.SaveChangesAsync();
+            }
+
             if (await bookContext.Books.AnyAsync())
             {
                 return;
