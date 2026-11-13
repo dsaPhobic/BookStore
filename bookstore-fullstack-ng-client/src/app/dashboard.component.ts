@@ -125,10 +125,10 @@ interface DashboardState {
               <div class="analytics-card surface-card">
                 <span class="analytics-label">Total revenue</span>
                 <strong class="analytics-value">
-                  ₹{{ summary.totalRevenue | number : "1.0-2" }}
+                  \${{ summary.totalRevenue | number : "1.0-2" }}
                 </strong>
                 <span class="analytics-sub">
-                  ₹{{ summary.revenueThisMonth | number : "1.0-2" }} this month
+                  \${{ summary.revenueThisMonth | number : "1.0-2" }} this month
                 </span>
               </div>
 
@@ -185,7 +185,7 @@ interface DashboardState {
                       ></div>
                     </div>
                     <span class="bar-value">
-                      ₹{{ period.revenue | number : "1.0-0" }}
+                      \${{ period.revenue | number : "1.0-0" }}
                     </span>
                   </div>
                 </div>
