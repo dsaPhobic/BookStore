@@ -1,35 +1,36 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
-  Output,
+  OnChanges,
+  ViewChild,
 } from "@angular/core";
-import { MatTableModule } from "@angular/material/table";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { SortModel } from "../../common/sort.model";
-import { MatSortModule, Sort } from "@angular/material/sort";
-import { MyOrderModel } from "../data/my-order.model";
-import { environment } from "../../../environments/environment.development";
-import { DatePipe } from "@angular/common";
+import { MatTableDataSource, MatTableModule } from "@angular/material/table";
+import { MatSort, MatSortModule } from "@angular/material/sort";
+import { DatePipe, NgClass, NgFor, NgIf } from "@angular/common";
+import { UserOrderModel } from "../data/user-order.model";
+import {
+  getOrderStatusCssClass,
+  getOrderStatusLabel,
+} from "../data/order-status";
 
 @Component({
   selector: "app-user-order-list",
   standalone: true,
   imports: [
     MatTableModule,
-    MatButtonModule,
-    MatIconModule,
     MatSortModule,
     DatePipe,
+    NgClass,
+    NgFor,
+    NgIf,
   ],
   template: `
     <table
       mat-table
-      [dataSource]="userOrders"
+      [dataSource]="dataSource"
       matSort
-      (matSortChange)="sortData($event)"
       class="mat-elevation-z8"
     >
       <ng-container matColumnDef="orderDate">
@@ -46,82 +47,152 @@ import { DatePipe } from "@angular/common";
         </td>
       </ng-container>
 
-      <ng-container matColumnDef="imageUrl">
-        <th mat-header-cell *matHeaderCellDef>Image</th>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
         <td mat-cell *matCellDef="let element">
-          <img
-            [src]="baseUrl + element.imageUrl"
-            alt="image"
-            style="width: 100px; height: 90px;"
-          />
+          <span class="status-chip" [ngClass]="statusClass(element.orderStatus)">
+            {{ statusLabel(element.orderStatus) }}
+          </span>
         </td>
       </ng-container>
 
-      <ng-container matColumnDef="title">
+      <ng-container matColumnDef="books">
+        <th mat-header-cell *matHeaderCellDef>Books</th>
+        <td mat-cell *matCellDef="let element">
+          <div *ngFor="let item of element.orderItems" class="book-line">
+            {{ item.book.title }}
+            <span class="muted">× {{ item.quantity }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="subTotal">
         <th
           mat-header-cell
           *matHeaderCellDef
           mat-sort-header
-          sortActionDescription="sort by title"
+          sortActionDescription="sort by sub total"
         >
-          Title
+          SubTotal
         </th>
-        <td mat-cell *matCellDef="let element">{{ element.title }}</td>
+        <td mat-cell *matCellDef="let element">₹{{ element.subTotal }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="quantity">
-        <th mat-header-cell *matHeaderCellDef>Quantity</th>
-        <td mat-cell *matCellDef="let element">{{ element.quantity }}</td>
+      <ng-container matColumnDef="tax">
+        <th mat-header-cell *matHeaderCellDef>Tax</th>
+        <td mat-cell *matCellDef="let element">₹{{ element.tax }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="price">
+      <ng-container matColumnDef="total">
         <th
           mat-header-cell
           *matHeaderCellDef
           mat-sort-header
-          sortActionDescription="sort by price"
+          sortActionDescription="sort by total"
         >
-          Price
+          Total
         </th>
-        <td mat-cell *matCellDef="let element">{{ element.price }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="authorNames">
-        <th mat-header-cell *matHeaderCellDef>Authors</th>
-        <td mat-cell *matCellDef="let element">{{ element.authorNames }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="genreNames">
-        <th mat-header-cell *matHeaderCellDef>Genres</th>
-        <td mat-cell *matCellDef="let element">{{ element.genreNames }}</td>
+        <td mat-cell *matCellDef="let element" class="total">
+          ₹{{ element.total }}
+        </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+
+    <p *ngIf="!dataSource.data.length" class="empty">
+      You have not placed any order yet.
+    </p>
   `,
-  styles: [``],
+  styles: [
+    `
+      table {
+        width: 100%;
+      }
+
+      .book-line + .book-line {
+        margin-top: 4px;
+      }
+
+      .muted {
+        color: #666;
+      }
+
+      .total {
+        font-weight: 600;
+      }
+
+      .empty {
+        margin-top: 1rem;
+      }
+
+      .status-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      .status-pending {
+        background-color: #f0ad4e;
+        color: #212529;
+      }
+
+      .status-processing {
+        background-color: #0d6efd;
+      }
+
+      .status-shipped {
+        background-color: #6f42c1;
+      }
+
+      .status-delivered {
+        background-color: #198754;
+      }
+
+      .status-cancelled {
+        background-color: #dc3545;
+      }
+
+      .status-unknown {
+        background-color: #6c757d;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserOrderListComponent {
-  @Input({ required: true }) userOrders!: readonly MyOrderModel[];
-  @Output() sort = new EventEmitter<SortModel>();
-  baseUrl = environment.baseUrl + "/resources/";
+export class UserOrderListComponent implements OnChanges, AfterViewInit {
+  @Input({ required: true }) userOrders!: readonly UserOrderModel[];
+
+  @ViewChild(MatSort) sort!: MatSort;
+
+  dataSource = new MatTableDataSource<UserOrderModel>([]);
 
   displayedColumns = [
     "orderDate",
-    "title",
-    "imageUrl",
-    "price",
-    "quantity",
-    "authorNames",
-    "genreNames",
+    "status",
+    "books",
+    "subTotal",
+    "tax",
+    "total",
   ];
 
-  sortData(sortData: Sort) {
-    this.sort.emit({
-      sortColumn: sortData.active,
-      sortDirection: sortData.direction as "asc" | "desc",
-    });
+  ngOnChanges() {
+    this.dataSource.data = [...this.userOrders];
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+  }
+
+  statusLabel(status: number) {
+    return getOrderStatusLabel(status);
+  }
+
+  statusClass(status: number) {
+    return getOrderStatusCssClass(status);
   }
 }

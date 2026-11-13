@@ -7,9 +7,8 @@ import {
   selectUserOrders,
   selectUserOrderTotalCount,
 } from "./state/user-order/user-order.selectors";
-import { map, Observable } from "rxjs";
+import { Observable } from "rxjs";
 import { UserOrderModel } from "./data/user-order.model";
-import { MyOrderModel } from "./data/my-order.model";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { UserOrderListComponent } from "./ui/user-order-list.component";
 import { PageSelectorModel } from "../common/page-selector.model";
@@ -33,7 +32,13 @@ import { UserOrderFilter } from "./ui/user-order-filter.component";
       (onSearch)="handleOnSearch($event)"
       (clearFilter)="handleClearFilter()"
     />
-    <ng-container *ngIf="myOrders$ | async as orders">
+
+    <ng-container *ngIf="loading$ | async">Loading...</ng-container>
+    <ng-container *ngIf="error$ | async">
+      Unable to load your orders. Please try again.
+    </ng-container>
+
+    <ng-container *ngIf="userOrders$ | async as orders">
       <app-user-order-list [userOrders]="orders" />
     </ng-container>
 
@@ -56,25 +61,6 @@ export class UserOrderComponent {
   userOrders$: Observable<readonly UserOrderModel[]> =
     this.store.select(selectUserOrders);
 
-  myOrders$: Observable<MyOrderModel[]> = this.userOrders$.pipe(
-    map((orders: readonly UserOrderModel[]) =>
-      orders.flatMap((order) =>
-        order.orderItems.map((item) => {
-          var myOrderItem: MyOrderModel = {
-            orderDate: order.orderDate,
-            title: item.book.title,
-            imageUrl: item.book.imageUrl ?? "",
-            price: item.price,
-            authorNames: item.book.authorNames,
-            genreNames: item.book.genreNames,
-            quantity: item.quantity,
-          };
-          return myOrderItem;
-        })
-      )
-    )
-  );
-
   loadUserOrders() {
     this.store.dispatch(userOrderActions.getUserOrder());
   }
@@ -91,6 +77,7 @@ export class UserOrderComponent {
     this.store.dispatch(userOrderActions.setSearchTerm({ searchTerm: null }));
     this.loadUserOrders();
   }
+
   handleFilterByPurchaseDate(range: {
     dateFrom: string | null;
     dateTo: string | null;

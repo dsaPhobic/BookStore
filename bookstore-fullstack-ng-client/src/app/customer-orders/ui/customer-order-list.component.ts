@@ -11,9 +11,13 @@ import { MatIconModule } from "@angular/material/icon";
 import { SortModel } from "../../common/sort.model";
 import { MatSortModule, Sort } from "@angular/material/sort";
 import { environment } from "../../../environments/environment.development";
-import { DatePipe } from "@angular/common";
+import { DatePipe, NgClass } from "@angular/common";
 import { UserOrderModel } from "../../order/data/user-order.model";
 import { RouterModule } from "@angular/router";
+import {
+  getOrderStatusCssClass,
+  getOrderStatusLabel,
+} from "../../order/data/order-status";
 
 @Component({
   selector: "app-customer-order-list",
@@ -24,6 +28,7 @@ import { RouterModule } from "@angular/router";
     MatIconModule,
     MatSortModule,
     DatePipe,
+    NgClass,
     RouterModule,
     MatButtonModule,
   ],
@@ -46,6 +51,18 @@ import { RouterModule } from "@angular/router";
         </th>
         <td mat-cell *matCellDef="let element">
           {{ element.orderDate | date : "dd-MMM-yyyy" }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let element">
+          <span
+            class="status-chip"
+            [ngClass]="statusClass(element.orderStatus)"
+          >
+            {{ statusLabel(element.orderStatus) }}
+          </span>
         </td>
       </ng-container>
 
@@ -119,7 +136,48 @@ import { RouterModule } from "@angular/router";
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
   `,
-  styles: [``],
+  styles: [
+    `
+      table {
+        width: 100%;
+      }
+
+      .status-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+      }
+
+      .status-pending {
+        background-color: #f0ad4e;
+        color: #212529;
+      }
+
+      .status-processing {
+        background-color: #0d6efd;
+      }
+
+      .status-shipped {
+        background-color: #6f42c1;
+      }
+
+      .status-delivered {
+        background-color: #198754;
+      }
+
+      .status-cancelled {
+        background-color: #dc3545;
+      }
+
+      .status-unknown {
+        background-color: #6c757d;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerOrderListComponent {
@@ -129,6 +187,7 @@ export class CustomerOrderListComponent {
 
   displayedColumns = [
     "orderDate",
+    "status",
     "name",
     "email",
     "mobileNumber",
@@ -137,6 +196,14 @@ export class CustomerOrderListComponent {
     "total",
     "actions",
   ];
+
+  statusLabel(status: number) {
+    return getOrderStatusLabel(status);
+  }
+
+  statusClass(status: number) {
+    return getOrderStatusCssClass(status);
+  }
 
   sortData(sortData: Sort) {
     this.sort.emit({
