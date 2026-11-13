@@ -92,7 +92,7 @@ import { User } from "./account/data/user.model";
         </ng-template>
 
         <a
-          href="https://github.com/rd003/BookStoreFullStackNg"
+          href="https://github.com/dsaPhobic/BookStore.git"
           target="_blank"
           mat-icon-button
           class="example-icon favorite-icon"
