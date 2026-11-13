@@ -159,26 +159,19 @@ public class OrderRepository : IOrderRepository
                                 .ThenInclude(b => b.BookAuthors)
                                 .ThenInclude(ba => ba.Author)
                                 .AsQueryable();
-        // filter by search term
+        // filter by search term (customer name / phone / email, or book title / author)
         if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
         {
             var searchTerm = queryParameters.SearchTerm.ToLower();
             userOrderQuery = userOrderQuery.Where(o =>
-         o.OrderItems.Any(oi =>
-             oi.Book.Title.ToLower().Contains(searchTerm) ||
-             oi.Book.BookAuthors.Any(ba => ba.Author.AuthorName.ToLower().Contains(searchTerm))
-         )
-     );
-            // Filter irrelevant order items after the query
-            foreach (var order in userOrderQuery)
-            {
-                order.OrderItems = order.OrderItems
-                    .Where(oi =>
-                        oi.Book.Title.ToLower().Contains(queryParameters.SearchTerm.ToLower()) ||
-                        oi.Book.BookAuthors.Any(ba => ba.Author.AuthorName.ToLower().Contains(queryParameters.SearchTerm.ToLower()))
-                    ).ToList();
-            }
-
+                o.Name.ToLower().Contains(searchTerm) ||
+                o.MobileNumber.ToLower().Contains(searchTerm) ||
+                o.Email.ToLower().Contains(searchTerm) ||
+                o.OrderItems.Any(oi =>
+                    oi.Book.Title.ToLower().Contains(searchTerm) ||
+                    oi.Book.BookAuthors.Any(ba => ba.Author.AuthorName.ToLower().Contains(searchTerm))
+                )
+            );
         }
 
         // filter by order date
@@ -208,6 +201,44 @@ public class OrderRepository : IOrderRepository
                                 .Where(oi=>oi.OrderId==orderId)
                                 .ToListAsync();
         return orderItems;
+    }
+
+    public async Task<Order?> GetOrderById(int orderId)
+    {
+        return await _context.Orders
+                                .AsNoTracking()
+                                .Include(c => c.OrderItems)
+                                .ThenInclude(c => c.Book)
+                                .ThenInclude(b => b.BookGenres)
+                                .ThenInclude(bg => bg.Genre)
+                                .Include(c => c.OrderItems)
+                                .ThenInclude(c => c.Book)
+                                .ThenInclude(b => b.BookAuthors)
+                                .ThenInclude(ba => ba.Author)
+                                .FirstOrDefaultAsync(o => o.Id == orderId);
+    }
+
+    public async Task<Order?> UpdateOrderStatus(int orderId, OrderStatus orderStatus)
+    {
+        var order = await _context.Orders
+                                .Include(c => c.OrderItems)
+                                .ThenInclude(c => c.Book)
+                                .ThenInclude(b => b.BookGenres)
+                                .ThenInclude(bg => bg.Genre)
+                                .Include(c => c.OrderItems)
+                                .ThenInclude(c => c.Book)
+                                .ThenInclude(b => b.BookAuthors)
+                                .ThenInclude(ba => ba.Author)
+                                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order is null)
+        {
+            return null;
+        }
+
+        order.OrderStatus = orderStatus;
+        await _context.SaveChangesAsync();
+        return order;
     }
 
 }
