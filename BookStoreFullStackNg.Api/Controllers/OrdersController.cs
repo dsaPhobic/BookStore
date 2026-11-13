@@ -70,7 +70,7 @@ public class OrdersController : ControllerBase
         var user = await _userRepository.GetUserByUserNameAsync(username);
         if (user == null)
         {
-            throw new BadRequestException("User is not logged in");
+            throw new BadRequestException($"User account '{username}' was not found");
         }
         var pagedOrders = await _orderRepository.UserOrder(user.Id,queryParams);
         var orders = pagedOrders.Items.ToUserOrderDtos();

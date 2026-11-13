@@ -85,16 +85,16 @@ import {
             </div>
             <div class="summary-item">
               <span class="label">Subtotal</span>
-              <span class="value">{{ order.subTotal | currency : "INR" }}</span>
+              <span class="value">{{ order.subTotal | currency : "USD" }}</span>
             </div>
             <div class="summary-item">
               <span class="label">Tax</span>
-              <span class="value">{{ order.tax | currency : "INR" }}</span>
+              <span class="value">{{ order.tax | currency : "USD" }}</span>
             </div>
             <div class="summary-item">
               <span class="label">Total</span>
               <span class="value total">{{
-                order.total | currency : "INR"
+                order.total | currency : "USD"
               }}</span>
             </div>
             <div class="summary-item">
