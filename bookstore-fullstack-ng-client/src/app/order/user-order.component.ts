@@ -8,6 +8,7 @@ import {
   selectUserOrderTotalCount,
 } from "./state/user-order/user-order.selectors";
 import { Observable } from "rxjs";
+import { HttpErrorResponse } from "@angular/common/http";
 import { UserOrderModel } from "./data/user-order.model";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { UserOrderListComponent } from "./ui/user-order-list.component";
@@ -64,8 +65,8 @@ import { RouterModule } from "@angular/router";
         <mat-spinner diameter="40"></mat-spinner>
       </div>
 
-      <p *ngIf="error$ | async" class="error-box">
-        Unable to load your orders. Please try again.
+      <p *ngIf="error$ | async as error" class="error-box">
+        {{ errorMessage(error) }}
       </p>
 
       <ng-container *ngIf="userOrders$ | async as orders">
@@ -123,6 +124,13 @@ export class UserOrderComponent {
 
   loadUserOrders() {
     this.store.dispatch(userOrderActions.getUserOrder());
+  }
+
+  errorMessage(error: HttpErrorResponse | null) {
+    return (
+      error?.error?.message ??
+      "Unable to load your orders. Please try again."
+    );
   }
 
   onPageSelect(page: PageSelectorModel) {

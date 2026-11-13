@@ -78,14 +78,14 @@ import {
             Subtotal
           </th>
           <td mat-cell *matCellDef="let element">
-            {{ element.subTotal | currency : "INR" }}
+            {{ element.subTotal | currency : "USD" }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="tax">
           <th mat-header-cell *matHeaderCellDef>Tax</th>
           <td mat-cell *matCellDef="let element">
-            {{ element.tax | currency : "INR" }}
+            {{ element.tax | currency : "USD" }}
           </td>
         </ng-container>
 
@@ -100,7 +100,7 @@ import {
           </th>
           <td mat-cell *matCellDef="let element">
             <strong class="total-amount">{{
-              element.total | currency : "INR"
+              element.total | currency : "USD"
             }}</strong>
           </td>
         </ng-container>
