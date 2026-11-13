@@ -23,6 +23,7 @@ import { AuthorFilter } from "./ui/author.filter";
 import { MatDialog } from "@angular/material/dialog";
 import { AuthorDialogComponent } from "./ui/author-dialog.component";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: "app-author",
@@ -34,19 +35,28 @@ import { MatButtonModule } from "@angular/material/button";
     AuthorPaginatorComponent,
     AuthorFilter,
     MatButtonModule,
+    MatIconModule,
   ],
   template: `
-    <h1>Authors</h1>
-    <p>
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">CATALOG ADMINISTRATION</span>
+        <h1>Manage Authors</h1>
+        <p class="page-subtitle">
+          Maintain your directory of book authors and writers.
+        </p>
+      </div>
       <button
         type="button"
         (click)="onAddUpdate('Add', null)"
-        mat-raised-button
+        mat-flat-button
         color="accent"
       >
-        +
+        <mat-icon>person_add</mat-icon>
+        Add Author
       </button>
-    </p>
+    </div>
+
     <app-author-filter (filter)="onFilter($event)" />
 
     <ng-container *ngIf="authors$ | async as authors">
@@ -84,6 +94,7 @@ export class AuthorComponent implements OnDestroy {
   onAddUpdate(action: string, author: Author | null = null) {
     const dialogRef = this.dialog.open(AuthorDialogComponent, {
       data: { author, title: action + " Author" },
+      width: "420px",
     });
 
     dialogRef.componentInstance.submit
@@ -91,7 +102,6 @@ export class AuthorComponent implements OnDestroy {
       .subscribe((submittedAuthor) => {
         if (!submittedAuthor) return;
         if (submittedAuthor.id) {
-          // update book
           this.store.dispatch(
             authorActions.updateAuthor({ author: submittedAuthor })
           );

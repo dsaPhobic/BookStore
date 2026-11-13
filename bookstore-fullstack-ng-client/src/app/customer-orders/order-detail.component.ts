@@ -1,10 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { ActivatedRoute, RouterModule } from "@angular/router";
-import { AsyncPipe, DatePipe, NgClass, NgFor, NgIf } from "@angular/common";
+import {
+  AsyncPipe,
+  CurrencyPipe,
+  DatePipe,
+  NgClass,
+  NgFor,
+  NgIf,
+} from "@angular/common";
 import { BehaviorSubject, combineLatest, map, switchMap } from "rxjs";
 import { MatButtonModule } from "@angular/material/button";
-import { MatCardModule } from "@angular/material/card";
 import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { MatSnackBar, MatSnackBarModule } from "@angular/material/snack-bar";
 import { OrderService } from "../order/data/order.service";
@@ -27,127 +34,140 @@ import {
     NgClass,
     AsyncPipe,
     DatePipe,
+    CurrencyPipe,
     RouterModule,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatSelectModule,
     MatSnackBarModule,
     CustomerOrderDetailListComponent,
   ],
   template: `
-    <ng-container *ngIf="order$ | async as order">
-      <div class="page-header">
-        <h1>Order #{{ order.id }}</h1>
-        <button mat-stroked-button routerLink="/customer-order">
-          Back to orders
-        </button>
+    <div class="order-detail-page bs-fade-in">
+      <div class="bs-page-header">
+        <div>
+          <span class="bs-badge bs-badge--primary" style="margin-bottom: 8px">
+            Order #{{ orderId$ | async }}
+          </span>
+          <h1 class="bs-page-title">Order Details</h1>
+          <p class="bs-page-subtitle">
+            Review the customer, pricing breakdown, fulfillment status, and
+            ordered books.
+          </p>
+        </div>
+        <a mat-stroked-button routerLink="/customer-order">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Orders
+        </a>
       </div>
 
-      <mat-card class="summary">
-        <div class="summary-grid">
-          <div class="summary-item">
-            <span class="label">Customer</span>
-            <span>{{ order.name }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Email</span>
-            <span>{{ order.email }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Mobile</span>
-            <span>{{ order.mobileNumber }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Order date</span>
-            <span>{{ order.orderDate | date : "dd-MMM-yyyy HH:mm" }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Sub total</span>
-            <span>₹{{ order.subTotal }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Tax</span>
-            <span>₹{{ order.tax }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Total</span>
-            <span class="total">₹{{ order.total }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="label">Status</span>
-            <span
-              class="status-chip"
-              [ngClass]="statusClass(order.orderStatus)"
-            >
-              {{ statusLabel(order.orderStatus) }}
-            </span>
-          </div>
-        </div>
-
-        <div class="status-form">
-          <mat-form-field appearance="outline" class="status-select">
-            <mat-label>Order status</mat-label>
-            <mat-select
-              [value]="selectedStatus ?? order.orderStatus"
-              [disabled]="isTerminal(order.orderStatus) || updating"
-              (selectionChange)="selectedStatus = $event.value"
-            >
-              <mat-option
-                *ngFor="let option of statusOptions"
-                [value]="option.value"
-                [disabled]="
-                  option.value !== order.orderStatus &&
-                  !isTransitionAllowed(order.orderStatus, option.value)
-                "
+      <ng-container *ngIf="order$ | async as order">
+        <div class="summary surface-card">
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="label">Customer</span>
+              <span class="value">{{ order.name }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Email</span>
+              <span class="value">{{ order.email }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Mobile</span>
+              <span class="value">{{ order.mobileNumber }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Order date</span>
+              <span class="value">{{
+                order.orderDate | date : "dd MMM yyyy, HH:mm"
+              }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Subtotal</span>
+              <span class="value">{{ order.subTotal | currency : "INR" }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Tax</span>
+              <span class="value">{{ order.tax | currency : "INR" }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Total</span>
+              <span class="value total">{{
+                order.total | currency : "INR"
+              }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Status</span>
+              <span
+                class="status-chip"
+                [ngClass]="statusClass(order.orderStatus)"
               >
-                {{ option.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+                {{ statusLabel(order.orderStatus) }}
+              </span>
+            </div>
+          </div>
 
-          <button
-            mat-raised-button
-            color="primary"
-            [disabled]="
-              updating ||
-              isTerminal(order.orderStatus) ||
-              (selectedStatus ?? order.orderStatus) === order.orderStatus
-            "
-            (click)="updateStatus(order)"
-          >
-            Update status
-          </button>
+          <div class="status-form">
+            <mat-form-field appearance="outline" class="status-select">
+              <mat-label>Order status</mat-label>
+              <mat-select
+                [value]="selectedStatus ?? order.orderStatus"
+                [disabled]="isTerminal(order.orderStatus) || updating"
+                (selectionChange)="selectedStatus = $event.value"
+              >
+                <mat-option
+                  *ngFor="let option of statusOptions"
+                  [value]="option.value"
+                  [disabled]="
+                    option.value !== order.orderStatus &&
+                    !isTransitionAllowed(order.orderStatus, option.value)
+                  "
+                >
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button
+              mat-flat-button
+              color="primary"
+              [disabled]="
+                updating ||
+                isTerminal(order.orderStatus) ||
+                (selectedStatus ?? order.orderStatus) === order.orderStatus
+              "
+              (click)="updateStatus(order)"
+            >
+              <mat-icon>sync</mat-icon>
+              Update status
+            </button>
+          </div>
+
+          <p class="hint" *ngIf="isTerminal(order.orderStatus)">
+            This order is in a terminal state and its status can no longer be
+            changed.
+          </p>
         </div>
 
-        <p class="hint" *ngIf="isTerminal(order.orderStatus)">
-          This order is in a terminal state and its status can no longer be
-          changed.
-        </p>
-      </mat-card>
-
-      <h2>Order items</h2>
-      <app-customer-order-detail-list [OrderItems]="order.orderItems" />
-    </ng-container>
+        <h2 class="section-title">Order Line Items</h2>
+        <div class="bs-table-shell">
+          <app-customer-order-detail-list [OrderItems]="order.orderItems" />
+        </div>
+      </ng-container>
+    </div>
   `,
   styles: [
     `
-      .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-      }
-
       .summary {
-        margin-bottom: 1.5rem;
+        margin-bottom: 24px;
       }
 
       .summary-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: 18px;
+        margin-bottom: 20px;
       }
 
       .summary-item {
@@ -159,19 +179,27 @@ import {
       .label {
         font-size: 12px;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #666;
+        letter-spacing: 0.06em;
+        color: var(--bs-muted);
+      }
+
+      .value {
+        color: var(--bs-text);
+        font-weight: 500;
       }
 
       .total {
         font-weight: 700;
+        color: var(--bs-ink);
       }
 
       .status-form {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 16px;
         flex-wrap: wrap;
+        padding-top: 16px;
+        border-top: 1px solid var(--bs-border);
       }
 
       .status-select {
@@ -182,41 +210,46 @@ import {
         display: inline-block;
         align-self: flex-start;
         padding: 4px 10px;
-        border-radius: 12px;
+        border-radius: 999px;
         font-size: 12px;
         font-weight: 600;
         color: #fff;
       }
 
       .status-pending {
-        background-color: #f0ad4e;
-        color: #212529;
+        background-color: #d99a2b;
+        color: #2b2100;
       }
 
       .status-processing {
-        background-color: #0d6efd;
+        background-color: #3d6fd6;
       }
 
       .status-shipped {
-        background-color: #6f42c1;
+        background-color: #7a5bc4;
       }
 
       .status-delivered {
-        background-color: #198754;
+        background-color: var(--bs-success);
       }
 
       .status-cancelled {
-        background-color: #dc3545;
+        background-color: #d9534f;
       }
 
       .status-unknown {
-        background-color: #6c757d;
+        background-color: #8b8f9c;
       }
 
       .hint {
-        margin: 0.5rem 0 0;
-        color: #666;
+        margin: 12px 0 0;
+        color: var(--bs-muted);
         font-size: 13px;
+      }
+
+      .section-title {
+        font-size: 22px;
+        margin: 0 0 16px;
       }
     `,
   ],
@@ -232,6 +265,8 @@ export class OrderDetailComponent {
   updating = false;
 
   private refresh$ = new BehaviorSubject<void>(undefined);
+
+  orderId$ = this.route.paramMap.pipe(map((params) => params.get("id")));
 
   order$ = combineLatest([
     this.route.paramMap.pipe(map((params) => Number(params.get("id")))),

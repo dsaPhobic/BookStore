@@ -7,6 +7,8 @@ import {
 } from "@angular/core";
 import { BookReadModel } from "../book/Data/book-read.model";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatIconModule } from "@angular/material/icon";
 import { Store } from "@ngrx/store";
 import {
   selectBookError,
@@ -29,14 +31,22 @@ import { CartActions } from "../cart/state/cart.actions";
     NgIf,
     NgFor,
     AsyncPipe,
+    MatProgressSpinnerModule,
+    MatIconModule,
     BookListPublicComponent,
     BookPublicFilterComponent,
   ],
   template: `
-    <ng-container *ngIf="loading$ | async as loading">
-      loading...
-    </ng-container>
-    <ng-container *ngIf="error$ | async as error"> error.. </ng-container>
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">STOREFRONT CATALOG</span>
+        <h1>Explore All Books</h1>
+        <p class="page-subtitle">
+          Browse titles across software engineering, science, business, and
+          classic literature.
+        </p>
+      </div>
+    </div>
 
     <ng-container *ngIf="genres$ | async as genres">
       <app-book-public-filter
@@ -46,11 +56,24 @@ import { CartActions } from "../cart/state/cart.actions";
       />
     </ng-container>
 
+    <div class="loading-center" *ngIf="loading$ | async">
+      <mat-spinner diameter="42"></mat-spinner>
+    </div>
+
     <ng-container *ngIf="books$ | async as books">
-      <app-book-list-public
-        [books]="books"
-        (addToCart)="addToCart($event)"
-      ></app-book-list-public>
+      <ng-container *ngIf="books.length > 0; else noBooksFound">
+        <app-book-list-public
+          [books]="books"
+          (addToCart)="addToCart($event)"
+        />
+      </ng-container>
+      <ng-template #noBooksFound>
+        <div class="surface-card empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h3>No matching books found</h3>
+          <p>Try clearing your search filter or selecting another genre.</p>
+        </div>
+      </ng-template>
     </ng-container>
   `,
   styles: [``],
@@ -71,8 +94,8 @@ export class BookPublicComponent implements OnDestroy {
       quantity: 1,
     };
     this.store.dispatch(CartActions.addCartItem({ cartItem }));
-    this.snackBar.open(`${book.title} added to cart`, "", {
-      duration: 3000,
+    this.snackBar.open(`"${book.title}" added to cart`, "Close", {
+      duration: 2500,
     });
   }
 

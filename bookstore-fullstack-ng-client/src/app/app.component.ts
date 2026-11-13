@@ -4,14 +4,13 @@ import { HeaderComponent } from "./header.component";
 import { FooterComponent } from "./footer.component";
 import { Store } from "@ngrx/store";
 import { MatSnackBar } from "@angular/material/snack-bar";
-import { catchError, of, Subject, takeUntil, tap } from "rxjs";
+import { Subject, takeUntil, tap } from "rxjs";
 import {
   selectLoginState,
   selectTokenState,
   selectUserInfo,
 } from "./account/state/account.selectors";
 import accountActions from "./account/state/account.actions";
-import { tokenUtils } from "./utils/token.utils";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { CartActions } from "./cart/state/cart.actions";
 import { selectCartCount } from "./cart/state/cart.selectors";
@@ -28,9 +27,10 @@ import { selectCartCount } from "./cart/state/cart.selectors";
       [user]="userInfo$ | async"
     />
 
-    <div class="content">
+    <main class="content">
       <router-outlet />
-    </div>
+    </main>
+
     <app-footer />
   `,
   styles: [
@@ -41,7 +41,7 @@ import { selectCartCount } from "./cart/state/cart.selectors";
         min-height: 100vh;
       }
       .content {
-        padding: 15px 20px;
+        flex: 1 0 auto;
       }
     `,
   ],
@@ -59,11 +59,10 @@ export class AppComponent implements OnInit, OnDestroy {
   cartItemCount$ = this.store.select(selectCartCount);
   logout() {
     this.store.dispatch(accountActions.logout());
-    // clear cart Item state
     this.store.dispatch(CartActions.emptyCartItemState());
 
-    this.snackBar.open("Successfully logged out", "Dismis", {
-      duration: 1000,
+    this.snackBar.open("Successfully logged out", "Dismiss", {
+      duration: 2000,
     });
     this.router.navigate(["/login"]);
   }

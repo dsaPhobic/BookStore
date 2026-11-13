@@ -15,7 +15,8 @@ import { MatInputModule } from "@angular/material/input";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSelectModule } from "@angular/material/select";
 import { MatIconModule } from "@angular/material/icon";
-import { NgFor } from "@angular/common";
+import { MatButtonModule } from "@angular/material/button";
+import { NgFor, NgIf } from "@angular/common";
 
 @Component({
   selector: "app-cart-item",
@@ -26,19 +27,34 @@ import { NgFor } from "@angular/common";
     MatSelectModule,
     ReactiveFormsModule,
     MatIconModule,
+    MatButtonModule,
     NgFor,
+    NgIf,
   ],
   template: `
-    <div class="item">
-      <img [src]="imageBaseUrl + cartItem.book.imageUrl" />
+    <div class="cover-box">
+      <img
+        *ngIf="cartItem.book.imageUrl; else fallbackIcon"
+        [src]="imageBaseUrl + cartItem.book.imageUrl"
+        [alt]="cartItem.book.title"
+      />
+      <ng-template #fallbackIcon>
+        <mat-icon>menu_book</mat-icon>
+      </ng-template>
     </div>
-    <div class="item">{{ cartItem.book.title }}</div>
-    <div class="item">{{ cartItem.book.authorNames }}</div>
-    <div class="item">{{ cartItem.book.genreNames }}</div>
-    <div class="item">{{ cartItem.book.publishedYear }}</div>
-    <div class="item">₹{{ cartItem.book.price }}</div>
-    <div class="item">
-      <mat-form-field [subscriptSizing]="'dynamic'">
+
+    <div class="info-box">
+      <h4>{{ cartItem.book.title }}</h4>
+      <p class="sub">
+        {{ cartItem.book.authorNames }} • {{ cartItem.book.publishedYear }}
+      </p>
+      <span class="chip" *ngIf="cartItem.book.genreNames">
+        {{ cartItem.book.genreNames }}
+      </span>
+    </div>
+
+    <div class="qty-box">
+      <mat-form-field appearance="outline" [subscriptSizing]="'dynamic'">
         <mat-label>Qty</mat-label>
         <mat-select [formControl]="quantity">
           <mat-option
@@ -49,37 +65,90 @@ import { NgFor } from "@angular/common";
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="item">
-      <button mat-icon-button (click)="deleteItem.emit(cartItem.id)">
-        <mat-icon color="accent">delete</mat-icon>
-      </button>
+
+    <div class="price-box">
+      <span class="unit">\${{ cartItem.book.price }} each</span>
+      <strong class="line-total">
+        \${{ (cartItem.book.price * cartItem.quantity).toFixed(2) }}
+      </strong>
     </div>
+
+    <button
+      mat-icon-button
+      color="warn"
+      (click)="deleteItem.emit(cartItem.id)"
+      title="Remove item"
+    >
+      <mat-icon>delete_outline</mat-icon>
+    </button>
   `,
   styles: [
     `
       :host {
-        display: flex;
+        display: grid;
+        grid-template-columns: 72px 1fr 110px 110px 40px;
         align-items: center;
-        gap: 15px;
-        padding: 10px 10px;
-        font-size: 18px;
-        background-color: rgb(249, 249, 249);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add a shadow */
-        border: 1px solid rgb(78, 78, 78);
-        border-radius: 10px;
-        margin-bottom: 5px;
+        gap: 16px;
+        padding: 16px 20px;
+        background: var(--bs-surface);
+        border: 1px solid var(--bs-border);
+        border-radius: var(--bs-radius);
+        box-shadow: var(--bs-shadow-sm);
       }
 
-      img {
-        max-width: 80px;
-        max-height: 80px;
-        height: auto;
-        width: auto;
-        object-fit: contain;
+      .cover-box {
+        width: 72px;
+        height: 96px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bs-surface-2);
+        border: 1px solid var(--bs-border);
+        display: grid;
+        place-items: center;
       }
 
-      mat-form-field {
-        width: 100px;
+      .cover-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .info-box h4 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--bs-ink-dark);
+      }
+
+      .info-box .sub {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: var(--bs-muted);
+      }
+
+      .price-box {
+        display: flex;
+        flex-direction: column;
+        text-align: right;
+      }
+
+      .price-box .unit {
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+
+      .price-box .line-total {
+        font-size: 17px;
+        color: var(--bs-ink-dark);
+      }
+
+      @media (max-width: 640px) {
+        :host {
+          grid-template-columns: 60px 1fr auto;
+        }
+        .price-box {
+          text-align: left;
+        }
       }
     `,
   ],

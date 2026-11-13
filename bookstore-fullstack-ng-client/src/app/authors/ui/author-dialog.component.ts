@@ -19,6 +19,7 @@ import {
 } from "@angular/material/dialog";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatIconModule } from "@angular/material/icon";
 import { Author } from "../data/author.model";
 
 @Component({
@@ -30,45 +31,67 @@ import { Author } from "../data/author.model";
     MatInputModule,
     MatButtonModule,
     MatDialogModule,
+    MatIconModule,
   ],
   template: `
-    <h1 mat-dialog-title>
-      {{ data.title }}
-    </h1>
+    <h1 mat-dialog-title>{{ data.title }}</h1>
 
     <div mat-dialog-content>
-      <form [formGroup]="authorForm" class="author-form">
+      <form [formGroup]="authorForm" class="dialog-form">
         <input type="hidden" formControlName="id" />
-        <mat-form-field appearance="fill">
+        <mat-form-field appearance="outline">
           <mat-label>Author Name</mat-label>
-          <input type="text" matInput formControlName="authorName" />
+          <input
+            type="text"
+            matInput
+            maxlength="30"
+            placeholder="e.g. Martin Fowler"
+            formControlName="authorName"
+          />
+          <mat-hint align="end">
+            {{ authorForm.get("authorName")?.value?.length || 0 }}/30
+          </mat-hint>
         </mat-form-field>
-
-        <div mat-dialog-actions>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="onSubmit()"
-            [disabled]="authorForm.invalid"
-            cdkFocusInitial
-          >
-            Save
-          </button>
-          <button mat-raised-button color="warn" (click)="onCanceled()">
-            Close
-          </button>
-        </div>
       </form>
     </div>
+
+    <div mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="onCanceled()">
+        Cancel
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="authorForm.invalid"
+        cdkFocusInitial
+      >
+        <mat-icon>check</mat-icon>
+        Save Author
+      </button>
+    </div>
   `,
-  styles: [``],
+  styles: [
+    `
+      .dialog-form {
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthorDialogComponent {
   @Output() submit = new EventEmitter<Author>();
   authorForm: FormGroup = new FormGroup({
     id: new FormControl<number>(0),
-    authorName: new FormControl<string>("", Validators.required),
+    authorName: new FormControl<string>("", [
+      Validators.required,
+      Validators.maxLength(30),
+    ]),
   });
 
   onCanceled() {

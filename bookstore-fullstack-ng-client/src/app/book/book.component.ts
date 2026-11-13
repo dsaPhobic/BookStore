@@ -14,6 +14,7 @@ import {
 } from "../authors/state/author.selectors";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 import { BookDialogComponent } from "./ui/book-dialog.component";
 import { AuthorService } from "../authors/data/author.service";
 import { GenreService } from "../genre/data/genre.service";
@@ -32,28 +33,39 @@ import { BookFilterComponent } from "./ui/book-filter.component";
     AsyncPipe,
     MatProgressSpinnerModule,
     MatButtonModule,
+    MatIconModule,
     BookPaginatorComponent,
     BookFilterComponent,
   ],
   template: `
-    <h1>Books</h1>
-    <mat-spinner *ngIf="loading$ | async"></mat-spinner>
-    <ng-container *ngIf="error$ | async as error"> </ng-container>
-    <p>
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">CATALOG ADMINISTRATION</span>
+        <h1>Manage Books</h1>
+        <p class="page-subtitle">
+          Add new books, upload cover images, and assign authors & genres.
+        </p>
+      </div>
       <button
         type="button"
         (click)="onAddUpdate('Add', null)"
-        mat-raised-button
+        mat-flat-button
         color="accent"
       >
-        +
+        <mat-icon>add</mat-icon>
+        Add New Book
       </button>
-    </p>
+    </div>
+
     <app-book-filter
       (filter)="onFilter($event)"
       (publishFromEvent)="onPublishFrom($event)"
       (publishToEvent)="onPublishTo($event)"
     />
+
+    <div class="loading-center" *ngIf="loading$ | async">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
 
     <ng-container *ngIf="books$ | async as books">
       <app-book-list
@@ -71,7 +83,6 @@ import { BookFilterComponent } from "./ui/book-filter.component";
       />
     </ng-container>
   `,
-
   styles: [``],
 })
 export class BookComponent implements OnInit, OnDestroy {
@@ -119,13 +130,13 @@ export class BookComponent implements OnInit, OnDestroy {
         genres$: this.genres$,
         authors$: this.authors$,
       },
+      maxWidth: "95vw",
     });
     dialogRef.componentInstance.submit
       .pipe(takeUntil(this.destroyed$))
       .subscribe((submittedBook) => {
         if (!submittedBook) return;
         if (submittedBook.id) {
-          // update book
           this.store.dispatch(BookActions.updateBook({ book: submittedBook }));
         } else {
           this.store.dispatch(BookActions.addBook({ book: submittedBook }));

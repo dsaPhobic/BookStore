@@ -17,6 +17,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>,IAsync
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Use a dedicated environment so startup seeding of the demo catalog
+        // does not interfere with the deterministic fixtures seeded below.
+        builder.UseEnvironment("Testing");
+
         builder.ConfigureServices(services =>
         {
             var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<BookStoreContext>));

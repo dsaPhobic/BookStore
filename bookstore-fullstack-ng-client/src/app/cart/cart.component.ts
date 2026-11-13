@@ -1,5 +1,8 @@
-import { AsyncPipe, JsonPipe, NgFor, NgIf } from "@angular/common";
+import { AsyncPipe, NgFor, NgIf } from "@angular/common";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
+import { RouterModule } from "@angular/router";
+import { MatIconModule } from "@angular/material/icon";
+import { MatButtonModule } from "@angular/material/button";
 import { Store } from "@ngrx/store";
 import { CartActions } from "./state/cart.actions";
 import { combineLatest, map, Observable } from "rxjs";
@@ -17,49 +20,77 @@ import { CartUpdateModel } from "./data/cart-update.model";
 @Component({
   selector: "app-cart",
   standalone: true,
-  imports: [NgIf, NgFor, AsyncPipe, CartItemComponent, ClassSummaryComponent],
+  imports: [
+    NgIf,
+    NgFor,
+    AsyncPipe,
+    RouterModule,
+    MatIconModule,
+    MatButtonModule,
+    CartItemComponent,
+    ClassSummaryComponent,
+  ],
   template: `
-    <div class="cart-container">
-      <ng-container *ngIf="loading$ | async"> loading... </ng-container>
-      <!-- if not error then #no-orror -->
-      <ng-container *ngIf="error$ | async; else noerror">
-        Error occured
-      </ng-container>
-      <ng-template #noerror>
-        <ng-container *ngIf="cartItems$ | async as cartItems">
-          <ng-container *ngIf="cartItems.length > 0; else noitems">
-            <div class="cart-items">
-              <app-cart-item
-                *ngFor="let cartItem of cartItems; trackBy: trackById"
-                [cartItem]="cartItem"
-                (selectQuantity)="onSelectQuantity($event)"
-                (deleteItem)="onDeleteItem($event)"
-              />
-            </div>
-            <app-cart-summary
-              [subTotal]="(subTotal$ | async) ?? 0"
-              [tax]="(tax$ | async) ?? 0"
-              [total]="(total$ | async) ?? 0"
-            />
-          </ng-container>
-
-          <ng-template #noitems>
-            <h3>No items in the cart 🛒. Please <a href="/books">add ➕</a></h3>
-          </ng-template>
-        </ng-container>
-      </ng-template>
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">YOUR BAG</span>
+        <h1>Shopping Cart</h1>
+      </div>
+      <a mat-stroked-button routerLink="/books">
+        <mat-icon>arrow_back</mat-icon> Continue Shopping
+      </a>
     </div>
+
+    <ng-container *ngIf="cartItems$ | async as cartItems">
+      <ng-container *ngIf="cartItems.length > 0; else noitems">
+        <div class="cart-grid">
+          <div class="cart-items-col">
+            <app-cart-item
+              *ngFor="let cartItem of cartItems; trackBy: trackById"
+              [cartItem]="cartItem"
+              (selectQuantity)="onSelectQuantity($event)"
+              (deleteItem)="onDeleteItem($event)"
+            />
+          </div>
+          <app-cart-summary
+            [subTotal]="(subTotal$ | async) ?? 0"
+            [tax]="(tax$ | async) ?? 0"
+            [total]="(total$ | async) ?? 0"
+          />
+        </div>
+      </ng-container>
+
+      <ng-template #noitems>
+        <div class="surface-card empty-state">
+          <mat-icon>shopping_bag</mat-icon>
+          <h3>Your cart is currently empty</h3>
+          <p>Explore our catalog and add your favorite books to get started.</p>
+          <a mat-flat-button color="accent" routerLink="/books">
+            Browse Books
+          </a>
+        </div>
+      </ng-template>
+    </ng-container>
   `,
   styles: [
     `
-      .cart-container {
-        display: flex;
-        gap: 20px;
-        padding: 15px;
+      .cart-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 28px;
+        align-items: start;
       }
 
-      .cart-items {
-        width: 62%;
+      .cart-items-col {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      @media (max-width: 860px) {
+        .cart-grid {
+          grid-template-columns: 1fr;
+        }
       }
     `,
   ],
@@ -75,20 +106,21 @@ export class CartComponent {
 
   subTotal$: Observable<number> = this.cartItems$.pipe(
     map((cartItems) => {
-      return cartItems.reduce(
-        (acc, curr) => (acc + curr.book.price) * curr.quantity,
-        0
+      return Number(
+        cartItems
+          .reduce((acc, curr) => acc + curr.book.price * curr.quantity, 0)
+          .toFixed(2)
       );
     })
   );
   taxInPercent = 18;
 
   tax$: Observable<number> = this.subTotal$.pipe(
-    map((subTotal) => (subTotal * this.taxInPercent) / 100)
+    map((subTotal) => Number(((subTotal * this.taxInPercent) / 100).toFixed(2)))
   );
 
   total$ = combineLatest([this.subTotal$, this.tax$]).pipe(
-    map(([subTotal, tax]) => subTotal + tax)
+    map(([subTotal, tax]) => Number((subTotal + tax).toFixed(2)))
   );
 
   trackById(index: number, cartItem: CartItem) {
@@ -112,7 +144,7 @@ export class CartComponent {
   }
 
   onDeleteItem(id: number) {
-    if (window.confirm("Are you sure to delete?")) {
+    if (window.confirm("Remove this book from your cart?")) {
       this.store.dispatch(CartActions.deleteCartItem({ id }));
     }
   }

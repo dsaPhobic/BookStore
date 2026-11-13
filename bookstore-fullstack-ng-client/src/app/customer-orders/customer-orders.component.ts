@@ -15,6 +15,8 @@ import { CustomerOrderListComponent } from "./ui/customer-order-list.component";
 import { CustomerOrderPaginationComponent } from "./ui/customer-order-pagination";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { SortModel } from "../common/sort.model";
+import { MatIconModule } from "@angular/material/icon";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 @Component({
   selector: "app-customer-orders",
@@ -25,34 +27,71 @@ import { SortModel } from "../common/sort.model";
     CustomerOrderFilter,
     CustomerOrderListComponent,
     CustomerOrderPaginationComponent,
+    MatIconModule,
+    MatProgressSpinnerModule,
   ],
   template: `
-    <h1>Customer Orders</h1>
-    <ng-container *ngIf="loading$ | async">Loading...</ng-container>
-    <ng-container *ngIf="error$ | async; else noerror">Error</ng-container>
+    <div class="customer-orders-page bs-fade-in">
+      <div class="bs-page-header">
+        <div>
+          <span class="bs-badge bs-badge--accent" style="margin-bottom: 8px">
+            <mat-icon style="font-size: 14px; width: 14px; height: 14px">
+              admin_panel_settings
+            </mat-icon>
+            Store Operations
+          </span>
+          <h1 class="bs-page-title">Customer Orders</h1>
+          <p class="bs-page-subtitle">
+            Monitor incoming orders, customer contact details, and order totals.
+          </p>
+        </div>
+      </div>
 
-    <ng-template #noerror>
       <app-customer-order-filter
         (filterByPurchaseDate)="handleFilterByPurchaseDate($event)"
         (onSearch)="handleOnSearch($event)"
         (clearFilter)="handleClearFilter()"
       />
-      <ng-container *ngIf="customerOrders$ | async as orders">
-        <app-customer-order-list
-          [customerOrders]="orders"
-          (sort)="handleSort($event)"
-        />
-      </ng-container>
 
-      <ng-container *ngIf="totalCount$ | async as totalCount">
-        <app-customer-order-pagination
-          (pageSelect)="onPageSelect($event)"
-          [totalRecords]="totalCount"
-        />
+      <div *ngIf="loading$ | async" class="loading-box">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <ng-container *ngIf="customerOrders$ | async as orders">
+        <div *ngIf="orders.length === 0" class="bs-empty-state">
+          <div class="bs-empty-state__icon">
+            <mat-icon>inbox</mat-icon>
+          </div>
+          <div class="bs-empty-state__title">No customer orders yet</div>
+          <p class="bs-empty-state__text">
+            Customer orders will appear here once purchases are completed.
+          </p>
+        </div>
+
+        <div class="bs-table-shell" *ngIf="orders.length > 0">
+          <app-customer-order-list
+            [customerOrders]="orders"
+            (sort)="handleSort($event)"
+          />
+          <ng-container *ngIf="totalCount$ | async as totalCount">
+            <app-customer-order-pagination
+              (pageSelect)="onPageSelect($event)"
+              [totalRecords]="totalCount"
+            />
+          </ng-container>
+        </div>
       </ng-container>
-    </ng-template>
+    </div>
   `,
-  styles: ``,
+  styles: [
+    `
+      .loading-box {
+        display: flex;
+        justify-content: center;
+        padding: 40px 0;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerOrdersComponent {

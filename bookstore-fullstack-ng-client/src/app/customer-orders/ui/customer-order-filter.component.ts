@@ -12,6 +12,8 @@ import { debounceTime, tap } from "rxjs";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { provideNativeDateAdapter } from "@angular/material/core";
 import { getDateWithoutTimezone } from "../../utils/date.utils";
+import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: "app-customer-order-filter",
@@ -21,47 +23,58 @@ import { getDateWithoutTimezone } from "../../utils/date.utils";
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
+    MatButtonModule,
+    MatIconModule,
   ],
   providers: [provideNativeDateAdapter()],
   template: `
-    <mat-form-field appearance="outline">
-      <mat-label>Search by customer name, phone or book</mat-label>
-      <input matInput [formControl]="search" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-date-range-input disabled [formGroup]="range" [rangePicker]="picker">
+    <div class="bs-filter-bar">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search customer name, email, phone or book</mat-label>
         <input
-          matStartDate
-          formControlName="dateFrom"
-          placeholder="Start date"
+          matInput
+          [formControl]="search"
+          placeholder="e.g. Quang, 0912..., Clean Code..."
         />
-        <input matEndDate formControlName="dateTo" placeholder="End date" />
-      </mat-date-range-input>
-      <mat-datepicker-toggle
-        matIconSuffix
-        [for]="picker"
-      ></mat-datepicker-toggle>
-      <mat-date-range-picker #picker disabled="false"></mat-date-range-picker>
-    </mat-form-field>
+      </mat-form-field>
 
-    <button
-      mat-raised-button
-      color="accent"
-      style="height: 54px;width:100px;font-size:16px;cursor:pointer"
-      (click)="clearFilters()"
-    >
-      Clear
-    </button>
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Order date range</mat-label>
+        <mat-date-range-input disabled [formGroup]="range" [rangePicker]="picker">
+          <input
+            matStartDate
+            formControlName="dateFrom"
+            placeholder="Start date"
+          />
+          <input matEndDate formControlName="dateTo" placeholder="End date" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="picker"
+        ></mat-datepicker-toggle>
+        <mat-date-range-picker #picker disabled="false"></mat-date-range-picker>
+      </mat-form-field>
+
+      <button
+        mat-stroked-button
+        type="button"
+        class="clear-btn"
+        (click)="clearFilters()"
+      >
+        <mat-icon>filter_alt_off</mat-icon>
+        Reset
+      </button>
+    </div>
   `,
   styles: [
     `
-      :host {
-        display: flex;
-        gap: 10px;
+      .filter-field {
+        flex: 1 1 280px;
       }
-      mat-form-field {
-        width: 300px;
+      .clear-btn {
+        height: 44px;
+        border-radius: 10px !important;
       }
     `,
   ],

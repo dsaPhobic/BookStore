@@ -14,6 +14,7 @@ import {
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatIconModule } from "@angular/material/icon";
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -30,33 +31,53 @@ import { GenreModel } from "../data/genre.model";
     MatInputModule,
     MatButtonModule,
     MatDialogModule,
+    MatIconModule,
   ],
-  styles: [``],
+  styles: [
+    `
+      .dialog-form {
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+    `,
+  ],
   template: `
-    <h1 mat-dialog-title>Add Genre</h1>
+    <h1 mat-dialog-title>{{ data.title }}</h1>
     <div mat-dialog-content>
-      <form [formGroup]="genreForm">
+      <form [formGroup]="genreForm" class="dialog-form">
         <input formControlName="id" type="hidden" />
 
-        <mat-form-field appearance="fill">
-          <mat-label>Genre</mat-label>
-          <input matInput placeholder="Genre" formControlName="genreName" />
+        <mat-form-field appearance="outline">
+          <mat-label>Genre Name</mat-label>
+          <input
+            matInput
+            maxlength="30"
+            placeholder="e.g. Software Architecture"
+            formControlName="genreName"
+          />
+          <mat-hint align="end">
+            {{ genreForm.get("genreName")?.value?.length || 0 }}/30
+          </mat-hint>
         </mat-form-field>
       </form>
     </div>
 
-    <div mat-dialog-actions>
+    <div mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="onCanceled()">
+        Cancel
+      </button>
       <button
-        mat-raised-button
+        mat-flat-button
         color="primary"
+        type="button"
         (click)="onSubmit()"
         [disabled]="genreForm.invalid"
         cdkFocusInitial
       >
-        Save
-      </button>
-      <button mat-raised-button color="warn" (click)="onCanceled()">
-        Close
+        <mat-icon>check</mat-icon>
+        Save Genre
       </button>
     </div>
   `,
@@ -67,7 +88,10 @@ export class AddGenreDialogComponent {
 
   genreForm = new FormGroup({
     id: new FormControl<number>(0),
-    genreName: new FormControl<string>("", Validators.required),
+    genreName: new FormControl<string>("", [
+      Validators.required,
+      Validators.maxLength(30),
+    ]),
   });
 
   onCanceled() {
@@ -86,8 +110,6 @@ export class AddGenreDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public data: { genre: GenreModel | null; title: string }
   ) {
-    // case : edit
-    //  if genre is not null, then set the form control values.Which indicates that user has pressed the edit button.
     if (data.genre != null) {
       this.genreForm.patchValue(data.genre);
     }

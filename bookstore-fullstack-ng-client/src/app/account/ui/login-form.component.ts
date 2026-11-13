@@ -14,6 +14,7 @@ import {
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { MatIconModule } from "@angular/material/icon";
 import { LoginModel } from "../data/login.model";
 import { NgIf } from "@angular/common";
 
@@ -24,6 +25,7 @@ import { NgIf } from "@angular/common";
     MatFormFieldModule,
     MatButtonModule,
     MatInputModule,
+    MatIconModule,
     NgIf,
     ReactiveFormsModule,
   ],
@@ -33,9 +35,14 @@ import { NgIf } from "@angular/common";
       [formGroup]="loginForm"
       (ngSubmit)="onSubmit($event)"
     >
-      <mat-form-field appearance="fill">
-        <mat-label>Username</mat-label>
-        <input matInput formControlName="username" />
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix>mail_outline</mat-icon>
+        <mat-label>Email / Username</mat-label>
+        <input
+          matInput
+          formControlName="username"
+          placeholder="admin@gmail.com"
+        />
         <mat-error
           *ngIf="
             f['username'].invalid &&
@@ -48,9 +55,15 @@ import { NgIf } from "@angular/common";
         </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="fill">
+      <mat-form-field appearance="outline">
+        <mat-icon matPrefix>lock_outline</mat-icon>
         <mat-label>Password</mat-label>
-        <input type="password" matInput formControlName="password" />
+        <input
+          type="password"
+          matInput
+          formControlName="password"
+          placeholder="••••••••"
+        />
         <mat-error
           *ngIf="
             f['password'].invalid &&
@@ -63,16 +76,16 @@ import { NgIf } from "@angular/common";
         </mat-error>
       </mat-form-field>
 
-      <div>
-        <button
-          type="submit"
-          mat-raised-button
-          color="primary"
-          [disabled]="loginForm.invalid"
-        >
-          Login
-        </button>
-      </div>
+      <button
+        type="submit"
+        mat-flat-button
+        color="primary"
+        class="submit-btn"
+        [disabled]="loginForm.invalid"
+      >
+        <mat-icon>login</mat-icon>
+        Sign In
+      </button>
     </form>
   `,
   styles: [
@@ -80,7 +93,17 @@ import { NgIf } from "@angular/common";
       .login-form {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 10px;
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
+
+      .submit-btn {
+        width: 100%;
+        height: 46px !important;
+        margin-top: 4px;
       }
     `,
   ],
