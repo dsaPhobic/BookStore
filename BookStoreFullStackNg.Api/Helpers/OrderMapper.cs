@@ -49,6 +49,11 @@ public static class OrderMapper
 
     }
 
+    public static UserOrderDto ToUserOrderDto(this Order order)
+    {
+        return new[] { order }.ToUserOrderDtos().Single();
+    }
+
     public static IEnumerable<OrderItemDto> ToOrderItemDtos(this IEnumerable<OrderItem> orderItems)
     {
         return orderItems.Select(item => new OrderItemDto

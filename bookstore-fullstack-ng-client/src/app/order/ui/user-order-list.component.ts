@@ -1,38 +1,35 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
-  Output,
+  OnChanges,
+  ViewChild,
 } from "@angular/core";
-import { MatTableModule } from "@angular/material/table";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { SortModel } from "../../common/sort.model";
-import { MatSortModule, Sort } from "@angular/material/sort";
-import { MyOrderModel } from "../data/my-order.model";
-import { environment } from "../../../environments/environment.development";
-import { CurrencyPipe, DatePipe } from "@angular/common";
+import { MatTableDataSource, MatTableModule } from "@angular/material/table";
+import { MatSort, MatSortModule } from "@angular/material/sort";
+import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from "@angular/common";
+import { UserOrderModel } from "../data/user-order.model";
+import {
+  getOrderStatusCssClass,
+  getOrderStatusLabel,
+} from "../data/order-status";
 
 @Component({
   selector: "app-user-order-list",
   standalone: true,
   imports: [
     MatTableModule,
-    MatButtonModule,
-    MatIconModule,
     MatSortModule,
     DatePipe,
     CurrencyPipe,
+    NgClass,
+    NgFor,
+    NgIf,
   ],
   template: `
     <div class="table-scroll">
-      <table
-        mat-table
-        [dataSource]="userOrders"
-        matSort
-        (matSortChange)="sortData($event)"
-      >
+      <table mat-table [dataSource]="dataSource" matSort>
         <ng-container matColumnDef="orderDate">
           <th
             mat-header-cell
@@ -49,61 +46,62 @@ import { CurrencyPipe, DatePipe } from "@angular/common";
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="imageUrl">
-          <th mat-header-cell *matHeaderCellDef>Cover</th>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let element">
-            <img
-              [src]="baseUrl + element.imageUrl"
-              [alt]="element.title"
-              class="order-thumb"
-            />
+            <span
+              class="status-chip"
+              [ngClass]="statusClass(element.orderStatus)"
+            >
+              {{ statusLabel(element.orderStatus) }}
+            </span>
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="title">
+        <ng-container matColumnDef="books">
+          <th mat-header-cell *matHeaderCellDef>Books</th>
+          <td mat-cell *matCellDef="let element">
+            <div *ngFor="let item of element.orderItems" class="book-line">
+              <span class="book-title">{{ item.book.title }}</span>
+              <span class="qty">×{{ item.quantity }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="subTotal">
           <th
             mat-header-cell
             *matHeaderCellDef
             mat-sort-header
-            sortActionDescription="sort by title"
+            sortActionDescription="sort by sub total"
           >
-            Book Title
+            Subtotal
           </th>
           <td mat-cell *matCellDef="let element">
-            <span class="book-title">{{ element.title }}</span>
+            {{ element.subTotal | currency : "USD" }}
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="quantity">
-          <th mat-header-cell *matHeaderCellDef>Qty</th>
+        <ng-container matColumnDef="tax">
+          <th mat-header-cell *matHeaderCellDef>Tax</th>
           <td mat-cell *matCellDef="let element">
-            <span class="bs-badge bs-badge--primary">×{{ element.quantity }}</span>
+            {{ element.tax | currency : "USD" }}
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="price">
+        <ng-container matColumnDef="total">
           <th
             mat-header-cell
             *matHeaderCellDef
             mat-sort-header
-            sortActionDescription="sort by price"
+            sortActionDescription="sort by total"
           >
-            Unit Price
+            Total
           </th>
           <td mat-cell *matCellDef="let element">
-            <strong class="price-text">{{ element.price | currency : "INR" }}</strong>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="authorNames">
-          <th mat-header-cell *matHeaderCellDef>Authors</th>
-          <td mat-cell *matCellDef="let element">{{ element.authorNames }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="genreNames">
-          <th mat-header-cell *matHeaderCellDef>Genres</th>
-          <td mat-cell *matCellDef="let element">
-            <span class="bs-badge bs-badge--accent">{{ element.genreNames }}</span>
+            <strong class="total-amount">{{
+              element.total | currency : "USD"
+            }}</strong>
           </td>
         </ng-container>
 
@@ -111,49 +109,108 @@ import { CurrencyPipe, DatePipe } from "@angular/common";
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
     </div>
+
+    <p *ngIf="!dataSource.data.length" class="empty">
+      You have not placed any order yet.
+    </p>
   `,
   styles: [
     `
       .table-scroll {
         overflow-x: auto;
       }
-      .order-thumb {
-        width: 48px;
-        height: 64px;
-        object-fit: cover;
-        border-radius: 6px;
-        box-shadow: var(--bs-shadow-sm);
+
+      .book-line + .book-line {
+        margin-top: 4px;
       }
+
       .book-title {
         font-weight: 600;
         color: var(--bs-text);
       }
-      .price-text {
-        color: var(--bs-primary);
+
+      .qty {
+        margin-left: 6px;
+        color: var(--bs-muted);
+        font-size: 13px;
+      }
+
+      .total-amount {
+        color: var(--bs-ink);
+      }
+
+      .empty {
+        margin: 1rem 0 0;
+        color: var(--bs-muted);
+      }
+
+      .status-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+      }
+
+      .status-pending {
+        background-color: #d99a2b;
+        color: #2b2100;
+      }
+
+      .status-processing {
+        background-color: #3d6fd6;
+      }
+
+      .status-shipped {
+        background-color: #7a5bc4;
+      }
+
+      .status-delivered {
+        background-color: var(--bs-success);
+      }
+
+      .status-cancelled {
+        background-color: #d9534f;
+      }
+
+      .status-unknown {
+        background-color: #8b8f9c;
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserOrderListComponent {
-  @Input({ required: true }) userOrders!: readonly MyOrderModel[];
-  @Output() sort = new EventEmitter<SortModel>();
-  baseUrl = environment.baseUrl + "/resources/";
+export class UserOrderListComponent implements OnChanges, AfterViewInit {
+  @Input({ required: true }) userOrders!: readonly UserOrderModel[];
+
+  @ViewChild(MatSort) sort!: MatSort;
+
+  dataSource = new MatTableDataSource<UserOrderModel>([]);
 
   displayedColumns = [
     "orderDate",
-    "imageUrl",
-    "title",
-    "authorNames",
-    "genreNames",
-    "quantity",
-    "price",
+    "status",
+    "books",
+    "subTotal",
+    "tax",
+    "total",
   ];
 
-  sortData(sortData: Sort) {
-    this.sort.emit({
-      sortColumn: sortData.active,
-      sortDirection: sortData.direction as "asc" | "desc",
-    });
+  ngOnChanges() {
+    this.dataSource.data = [...this.userOrders];
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+  }
+
+  statusLabel(status: number) {
+    return getOrderStatusLabel(status);
+  }
+
+  statusClass(status: number) {
+    return getOrderStatusCssClass(status);
   }
 }

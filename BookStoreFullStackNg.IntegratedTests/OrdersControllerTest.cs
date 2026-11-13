@@ -50,7 +50,7 @@ public class OrdersControllerTest
     public async Task GetUserOrders_ReturnsOk_WhenSuccess()
     {
         // Act
-        var response = await _client.GetAsync($"{_url}/user-orders");
+        var response = await _client.GetAsync($"{_url}/my-orders");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK,response.StatusCode);
@@ -67,7 +67,7 @@ public class OrdersControllerTest
         _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
        
         // Act
-        var response = await _client.GetAsync(_url);
+        var response = await _client.GetAsync($"{_url}/customer-orders");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -91,5 +91,95 @@ public class OrdersControllerTest
         var orderItems = await response.Content.ReadFromJsonAsync<IEnumerable<OrderItem>>();
         Assert.NotNull(orderItems);
         Assert.NotEmpty(orderItems);
+    }
+
+    [Fact]
+    public async Task GetOrder_ReturnsOk_ForAdmin()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
+
+        // Act
+        var response = await _client.GetAsync($"{_url}/1");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var order = await response.Content.ReadFromJsonAsync<UserOrderDto>();
+        Assert.NotNull(order);
+        Assert.Equal(1, order.Id);
+    }
+
+    [Fact]
+    public async Task GetOrder_ReturnsNotFound_WhenOrderDoesNotExist()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
+
+        // Act
+        var response = await _client.GetAsync($"{_url}/9999");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateOrderStatus_ReturnsNoContent_ForAdmin()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
+        var payload = new { OrderStatus = (int)OrderStatus.Processing };
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"{_url}/1/status", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var orderResponse = await _client.GetAsync($"{_url}/1");
+        var order = await orderResponse.Content.ReadFromJsonAsync<UserOrderDto>();
+        Assert.NotNull(order);
+        Assert.Equal(OrderStatus.Processing, order.OrderStatus);
+    }
+
+    [Fact]
+    public async Task UpdateOrderStatus_ReturnsBadRequest_WhenStatusIsInvalid()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
+        var payload = new { OrderStatus = 999 };
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"{_url}/1/status", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateOrderStatus_ReturnsNotFound_WhenOrderDoesNotExist()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "Admin");
+        var payload = new { OrderStatus = (int)OrderStatus.Processing };
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"{_url}/9999/status", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateOrderStatus_ReturnsForbidden_ForNonAdmin()
+    {
+        // Arrange
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.TestUserRolesHeader, "User");
+        var payload = new { OrderStatus = (int)OrderStatus.Shipped };
+
+        // Act
+        var response = await _client.PutAsJsonAsync($"{_url}/1/status", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

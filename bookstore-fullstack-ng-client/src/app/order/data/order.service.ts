@@ -36,7 +36,7 @@ export class OrderService {
       params = params.set("endDate", endDate);
     }
     return this.http.get<PagedList<UserOrderModel>>(
-      this.baseUrl + "/user-orders",
+      this.baseUrl + "/my-orders",
       { params }
     );
   }
@@ -58,12 +58,25 @@ export class OrderService {
       params = params.set("startDate", startDate);
       params = params.set("endDate", endDate);
     }
-    return this.http.get<PagedList<UserOrderModel>>(this.baseUrl, { params });
+    return this.http.get<PagedList<UserOrderModel>>(
+      this.baseUrl + "/customer-orders",
+      { params }
+    );
   }
 
   getOrderItemsByOrderId(orderId: number): Observable<Array<OrderItem>> {
     return this.http.get<Array<OrderItem>>(
       this.baseUrl + "/orderitems/" + orderId
     );
+  }
+
+  getOrder(orderId: number): Observable<UserOrderModel> {
+    return this.http.get<UserOrderModel>(`${this.baseUrl}/${orderId}`);
+  }
+
+  updateOrderStatus(orderId: number, orderStatus: number): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${orderId}/status`, {
+      orderStatus,
+    });
   }
 }

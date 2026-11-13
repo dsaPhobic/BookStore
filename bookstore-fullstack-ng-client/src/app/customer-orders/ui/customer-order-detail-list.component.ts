@@ -48,7 +48,7 @@ import { CurrencyPipe } from "@angular/common";
         <ng-container matColumnDef="price">
           <th mat-header-cell *matHeaderCellDef>Price</th>
           <td mat-cell *matCellDef="let element">
-            <strong>{{ element.price | currency : "INR" }}</strong>
+            <strong>{{ element.price | currency : "USD" }}</strong>
           </td>
         </ng-container>
 

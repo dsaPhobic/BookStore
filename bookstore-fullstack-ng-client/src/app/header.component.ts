@@ -86,6 +86,18 @@ import { User } from "./account/data/user.model";
           </div>
         </ng-template>
 
+        <!-- Repository link -->
+        <a
+          mat-icon-button
+          class="icon-action github-link"
+          href="https://github.com/dsaPhobic/BookStore.git"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="BookStore repository on GitHub"
+        >
+          <mat-icon>code</mat-icon>
+        </a>
+
         <!-- Mobile menu trigger -->
         <button
           mat-icon-button
@@ -295,6 +307,15 @@ import { User } from "./account/data/user.model";
       }
 
       .icon-action {
+        color: var(--bs-ink-dark);
+      }
+
+      .github-link {
+        color: var(--bs-muted);
+        transition: color 0.15s ease;
+      }
+
+      .github-link:hover {
         color: var(--bs-ink-dark);
       }
 

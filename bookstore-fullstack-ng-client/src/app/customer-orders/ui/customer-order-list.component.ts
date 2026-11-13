@@ -10,10 +10,13 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { SortModel } from "../../common/sort.model";
 import { MatSortModule, Sort } from "@angular/material/sort";
-import { environment } from "../../../environments/environment.development";
-import { CurrencyPipe, DatePipe } from "@angular/common";
+import { CurrencyPipe, DatePipe, NgClass } from "@angular/common";
 import { UserOrderModel } from "../../order/data/user-order.model";
 import { RouterModule } from "@angular/router";
+import {
+  getOrderStatusCssClass,
+  getOrderStatusLabel,
+} from "../../order/data/order-status";
 
 @Component({
   selector: "app-customer-order-list",
@@ -25,6 +28,7 @@ import { RouterModule } from "@angular/router";
     MatSortModule,
     DatePipe,
     CurrencyPipe,
+    NgClass,
     RouterModule,
   ],
   template: `
@@ -47,6 +51,18 @@ import { RouterModule } from "@angular/router";
           <td mat-cell *matCellDef="let element">
             <span class="bs-badge bs-badge--neutral">
               {{ element.orderDate | date : "dd MMM yyyy" }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <span
+              class="status-chip"
+              [ngClass]="statusClass(element.orderStatus)"
+            >
+              {{ statusLabel(element.orderStatus) }}
             </span>
           </td>
         </ng-container>
@@ -92,21 +108,23 @@ import { RouterModule } from "@angular/router";
         <ng-container matColumnDef="subTotal">
           <th mat-header-cell *matHeaderCellDef>Subtotal</th>
           <td mat-cell *matCellDef="let element">
-            {{ element.subTotal | currency : "INR" }}
+            {{ element.subTotal | currency : "USD" }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="tax">
           <th mat-header-cell *matHeaderCellDef>Tax</th>
           <td mat-cell *matCellDef="let element">
-            {{ element.tax | currency : "INR" }}
+            {{ element.tax | currency : "USD" }}
           </td>
         </ng-container>
 
         <ng-container matColumnDef="total">
           <th mat-header-cell *matHeaderCellDef>Total</th>
           <td mat-cell *matCellDef="let element">
-            <strong class="total-amount">{{ element.total | currency : "INR" }}</strong>
+            <strong class="total-amount">{{
+              element.total | currency : "USD"
+            }}</strong>
           </td>
         </ng-container>
 
@@ -134,11 +152,48 @@ import { RouterModule } from "@angular/router";
       .table-scroll {
         overflow-x: auto;
       }
+
       .customer-name {
         color: var(--bs-text);
       }
+
       .total-amount {
-        color: var(--bs-primary);
+        color: var(--bs-ink);
+      }
+
+      .status-chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+      }
+
+      .status-pending {
+        background-color: #d99a2b;
+        color: #2b2100;
+      }
+
+      .status-processing {
+        background-color: #3d6fd6;
+      }
+
+      .status-shipped {
+        background-color: #7a5bc4;
+      }
+
+      .status-delivered {
+        background-color: var(--bs-success);
+      }
+
+      .status-cancelled {
+        background-color: #d9534f;
+      }
+
+      .status-unknown {
+        background-color: #8b8f9c;
       }
     `,
   ],
@@ -147,10 +202,10 @@ import { RouterModule } from "@angular/router";
 export class CustomerOrderListComponent {
   @Input({ required: true }) customerOrders!: readonly UserOrderModel[];
   @Output() sort = new EventEmitter<SortModel>();
-  baseUrl = environment.baseUrl + "/resources/";
 
   displayedColumns = [
     "orderDate",
+    "status",
     "name",
     "email",
     "mobileNumber",
@@ -159,6 +214,14 @@ export class CustomerOrderListComponent {
     "total",
     "actions",
   ];
+
+  statusLabel(status: number) {
+    return getOrderStatusLabel(status);
+  }
+
+  statusClass(status: number) {
+    return getOrderStatusCssClass(status);
+  }
 
   sortData(sortData: Sort) {
     this.sort.emit({

@@ -1,4 +1,5 @@
-﻿using BookStoreFullStackNg.Data.Domain;
+﻿using BookStoreFullStackNg.Data.Constants;
+using BookStoreFullStackNg.Data.Domain;
 using BookStoreFullStackNg.Data.DTOs.Common;
 using BookStoreFullStackNg.Data.DTOs.Order;
 
@@ -10,4 +11,6 @@ public interface IOrderRepository
     Task<PagedList<Order>> UserOrder(int userId, UserOrdersQueryParameters queryParameters);
     Task<PagedList<Order>> GetOrders(UserOrdersQueryParameters queryParameters);
     Task<IEnumerable<OrderItem>> GetOrderItemsByOrderId(int orderId);
+    Task<Order?> GetOrderById(int orderId);
+    Task<Order?> UpdateOrderStatus(int orderId, OrderStatus orderStatus);
 }

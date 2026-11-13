@@ -58,6 +58,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("user-orders")]
+    [HttpGet("my-orders")]
     public async Task<IActionResult> GetUserOrders([FromQuery]UserOrdersQueryParameters queryParams)
     {
         string? username = User?.Identity?.Name;
@@ -69,7 +70,7 @@ public class OrdersController : ControllerBase
         var user = await _userRepository.GetUserByUserNameAsync(username);
         if (user == null)
         {
-            throw new BadRequestException("User is not logged in");
+            throw new BadRequestException($"User account '{username}' was not found");
         }
         var pagedOrders = await _orderRepository.UserOrder(user.Id,queryParams);
         var orders = pagedOrders.Items.ToUserOrderDtos();
@@ -79,6 +80,7 @@ public class OrdersController : ControllerBase
 
     [Authorize(Roles = Roles.Admin)]
     [HttpGet]
+    [HttpGet("customer-orders")]
     public async Task<IActionResult> Orders([FromQuery] UserOrdersQueryParameters queryParams)
     {
        var pagedOrders = await _orderRepository.GetOrders(queryParams);
@@ -93,6 +95,48 @@ public class OrdersController : ControllerBase
     {
         var orderItems = await _orderRepository.GetOrderItemsByOrderId(orderId);
         return Ok(orderItems.ToOrderItemDtos());
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet("{orderId:int}")]
+    public async Task<IActionResult> GetOrder(int orderId)
+    {
+        var order = await _orderRepository.GetOrderById(orderId);
+        if (order is null)
+        {
+            throw new NotFoundException($"Order with id {orderId} not found");
+        }
+        return Ok(order.ToUserOrderDto());
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPut("{orderId:int}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatusUpdateDto statusUpdate)
+    {
+        if (!Enum.IsDefined(typeof(OrderStatus), statusUpdate.OrderStatus))
+        {
+            throw new BadRequestException("Invalid order status");
+        }
+
+        var order = await _orderRepository.GetOrderById(orderId);
+        if (order is null)
+        {
+            throw new NotFoundException($"Order with id {orderId} not found");
+        }
+
+        if (order.OrderStatus == statusUpdate.OrderStatus)
+        {
+            throw new BadRequestException($"Order is already in {order.OrderStatus} status");
+        }
+
+        if (!OrderStatusWorkflow.IsTransitionAllowed(order.OrderStatus, statusUpdate.OrderStatus))
+        {
+            throw new BadRequestException(
+                $"Cannot change order status from {order.OrderStatus} to {statusUpdate.OrderStatus}");
+        }
+
+        await _orderRepository.UpdateOrderStatus(orderId, statusUpdate.OrderStatus);
+        return NoContent();
     }
 
 }
