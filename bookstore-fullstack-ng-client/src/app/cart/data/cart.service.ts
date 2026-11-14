@@ -23,6 +23,10 @@ export class CartService {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
 
+  clearCart(): Observable<any> {
+    return this.http.delete<any>(this.baseUrl);
+  }
+
   getUserCart(): Observable<CartReadModel> {
     return this.http.get<CartReadModel>(`${this.baseUrl}/userCart`);
   }

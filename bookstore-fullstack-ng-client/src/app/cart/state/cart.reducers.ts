@@ -77,6 +77,20 @@ export const cartReducers = createReducer(
     error,
     loading: false,
   })),
+  on(CartActions.clearCart, (state) => ({
+    ...state,
+    loading: true,
+  })),
+  on(CartActions.clearCartSuccess, (state) => ({
+    ...state,
+    cartItems: [],
+    loading: false,
+  })),
+  on(CartActions.clearCartFailure, (state, { error }) => ({
+    ...state,
+    error,
+    loading: false,
+  })),
   on(CartActions.emptyCartItemState, (state) => ({
     ...state,
     cartItems: [],

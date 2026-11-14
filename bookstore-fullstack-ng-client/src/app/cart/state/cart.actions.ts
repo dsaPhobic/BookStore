@@ -19,6 +19,9 @@ export const CartActions = createActionGroup({
     "Delete cart item": props<{ id: number }>(),
     "Delete cart item success": props<{ id: number }>(),
     "Delete cart item failure": props<{ error: HttpErrorResponse }>(),
+    "Clear cart": emptyProps(),
+    "Clear cart success": emptyProps(),
+    "Clear cart failure": props<{ error: HttpErrorResponse }>(),
     "Empty Cart Item State": emptyProps(),
   },
 });
