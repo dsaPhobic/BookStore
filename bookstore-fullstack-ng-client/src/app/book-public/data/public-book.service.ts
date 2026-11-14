@@ -16,6 +16,17 @@ export interface PublicBookQuery {
   maxPrice: number | null;
 }
 
+export type PublicBookFilters = Pick<
+  PublicBookQuery,
+  | "searchTerm"
+  | "sortBy"
+  | "genreIds"
+  | "publishedFrom"
+  | "publishedTo"
+  | "minPrice"
+  | "maxPrice"
+>;
+
 export interface PublicBookPage {
   items: ReadonlyArray<BookReadModel>;
   totalCount: number;
