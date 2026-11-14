@@ -146,6 +146,43 @@ namespace BookStoreFullStackNg.Data.Migrations
                     b.ToTable("CartItem", (string)null);
                 });
 
+            modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.Coupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("DiscountPercent")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("MaxDiscount")
+                        .HasColumnType("REAL");
+
+                    b.Property<int?>("MaxUsageCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UsageCount")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Coupon", (string)null);
+                });
+
             modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.Genre", b =>
                 {
                     b.Property<int>("Id")
@@ -167,6 +204,15 @@ namespace BookStoreFullStackNg.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("CouponCode")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("DiscountAmount")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("DiscountPercent")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("Email")
                         .IsRequired()

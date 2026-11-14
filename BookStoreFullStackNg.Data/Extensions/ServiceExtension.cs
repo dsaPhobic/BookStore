@@ -23,5 +23,6 @@ public static class ServiceExtension
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
     }
 }
