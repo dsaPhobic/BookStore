@@ -4,7 +4,6 @@ using BookStoreFullStackNg.Data.DTOs;
 using BookStoreFullStackNg.Data.DTOs.Author;
 using BookStoreFullStackNg.Data.DTOs.Book;
 using BookStoreFullStackNg.Data.DTOs.Common;
-using BookStoreFullStackNg.Data.Helpers;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +12,10 @@ namespace BookStoreFullStackNg.Data.Reopositories.Implementations;
 public class BookRepository : IBookRepository
 {
     private readonly BookStoreContext _context;
-    private readonly ISortHelper<Book> _sortHelper;
 
-    public BookRepository(BookStoreContext context, ISortHelper<Book> sortHelper)
+    public BookRepository(BookStoreContext context)
     {
         _context = context;
-        _sortHelper = sortHelper;
     }
 
     public async Task<BookReadDto> AddBookAsync(BookCreateDto bookToCreate)
@@ -202,12 +199,40 @@ public class BookRepository : IBookRepository
             booksQuery = booksQuery.Where(b => b.BookGenres.Any(bg=> queryParameters.GenreIds.Contains(bg.GenreId)));
         }
 
-        if (!string.IsNullOrEmpty(queryParameters.SortBy))
-        {
-            booksQuery = _sortHelper.ApplySort(booksQuery, queryParameters.SortBy);
-        }
+        booksQuery = ApplySort(booksQuery, queryParameters.SortBy);
 
         return await PagedList<Book>.ToPagedListAsync(booksQuery, queryParameters.PageNumber, queryParameters.PageSize);
+    }
+
+    private static IQueryable<Book> ApplySort(IQueryable<Book> books, string? sortBy)
+    {
+        var normalizedSort = sortBy?.Trim().ToLowerInvariant();
+
+        return normalizedSort switch
+        {
+            "title desc" => books
+                .OrderByDescending(book => book.Title)
+                .ThenBy(book => book.Id),
+            "price" or "price asc" => books
+                .OrderBy(book => book.Price)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "price desc" => books
+                .OrderByDescending(book => book.Price)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "publishedyear" or "publishedyear asc" => books
+                .OrderBy(book => book.PublishedYear)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "publishedyear desc" => books
+                .OrderByDescending(book => book.PublishedYear)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            _ => books
+                .OrderBy(book => book.Title)
+                .ThenBy(book => book.Id)
+        };
     }
 
 
