@@ -67,13 +67,24 @@ export class PublicBookService {
     return this.http.get<PublicBookPage>(this.baseUrl, { params }).pipe(
       map((page) => ({
         ...page,
-        items: page.items.map((book) => ({
-          ...book,
-          authorNames: book.authors.map((author) => author.authorName),
-          genreNames: book.genres.map((genre) => genre.genreName),
-        })),
+        items: page.items.map((book) => this.enrichBook(book)),
       }))
     );
+  }
+
+  getBookById(id: number): Observable<BookReadModel> {
+    return this.http
+      .get<BookReadModel>(`${this.baseUrl}/${id}`)
+      .pipe(map((book) => this.enrichBook(book)));
+  }
+
+  getRelatedBooks(id: number, limit = 4): Observable<ReadonlyArray<BookReadModel>> {
+    const params = new HttpParams().set("limit", limit);
+    return this.http
+      .get<ReadonlyArray<BookReadModel>>(`${this.baseUrl}/${id}/related`, {
+        params,
+      })
+      .pipe(map((books) => books.map((book) => this.enrichBook(book))));
   }
 
   private setOptionalNumber(
@@ -82,5 +93,13 @@ export class PublicBookService {
     value: number | null
   ): HttpParams {
     return value === null ? params : params.set(key, value);
+  }
+
+  private enrichBook(book: BookReadModel): BookReadModel {
+    return {
+      ...book,
+      authorNames: book.authors.map((author) => author.authorName),
+      genreNames: book.genres.map((genre) => genre.genreName),
+    };
   }
 }

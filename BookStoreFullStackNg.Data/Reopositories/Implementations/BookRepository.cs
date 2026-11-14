@@ -148,6 +148,51 @@ public class BookRepository : IBookRepository
         return book;
     }
 
+    public async Task<IReadOnlyList<BookReadDto>> GetRelatedBooksAsync(int bookId, int limit)
+    {
+        var genreIds = await _context.BookGenres
+            .AsNoTracking()
+            .Where(bookGenre => bookGenre.BookId == bookId)
+            .Select(bookGenre => bookGenre.GenreId)
+            .ToListAsync();
+
+        if (genreIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await _context.Books
+            .AsNoTracking()
+            .Where(book => book.Id != bookId
+                && book.BookGenres.Any(bookGenre => genreIds.Contains(bookGenre.GenreId)))
+            .OrderByDescending(book => book.BookGenres.Count(
+                bookGenre => genreIds.Contains(bookGenre.GenreId)))
+            .ThenByDescending(book => book.PublishedYear)
+            .ThenBy(book => book.Title)
+            .ThenBy(book => book.Id)
+            .Take(limit)
+            .Select(book => new BookReadDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Description = book.Description,
+                PublishedYear = book.PublishedYear,
+                ImageUrl = book.ImageUrl,
+                Price = book.Price,
+                Authors = book.BookAuthors
+                    .Select(bookAuthor => new AuthorReadDTO(
+                        bookAuthor.Author.Id,
+                        bookAuthor.Author.AuthorName))
+                    .ToList(),
+                Genres = book.BookGenres
+                    .Select(bookGenre => new GenreReadDto(
+                        bookGenre.Genre.Id,
+                        bookGenre.Genre.GenreName))
+                    .ToList()
+            })
+            .ToListAsync();
+    }
+
     public async Task<PagedList<Book>> GetBooksAsync(BookQueryParameter queryParameters)
     {
         var booksQuery = _context.Books

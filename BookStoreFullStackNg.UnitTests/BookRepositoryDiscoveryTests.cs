@@ -177,6 +177,77 @@ public class BookRepositoryDiscoveryTests : IAsyncLifetime
         Assert.Equal("Clean Architecture", Assert.Single(result.Items).Title);
     }
 
+    [Fact]
+    public async Task GetRelatedBooksAsync_RanksSharedGenresAndExcludesCurrentBook()
+    {
+        var currentBook = await _context.Books.SingleAsync(
+            book => book.Title == "Clean Architecture");
+        var dataGenre = await _context.Genres.SingleAsync(
+            genre => genre.GenreName == "Data");
+        var programmingGenre = await _context.Genres.SingleAsync(
+            genre => genre.GenreName == "Programming");
+        var designGenre = await _context.Genres.SingleAsync(
+            genre => genre.GenreName == "Design");
+
+        currentBook.BookGenres.Add(new BookGenre { GenreId = dataGenre.Id });
+        _context.Books.AddRange(
+            new Book
+            {
+                Title = "Best Genre Match",
+                Description = "Shares two genres",
+                Price = 500,
+                PublishedYear = 2010,
+                BookGenres =
+                [
+                    new BookGenre { GenreId = programmingGenre.Id },
+                    new BookGenre { GenreId = dataGenre.Id }
+                ]
+            },
+            new Book
+            {
+                Title = "Newer Single Match",
+                Description = "Shares one genre",
+                Price = 500,
+                PublishedYear = 2024,
+                BookGenres = [new BookGenre { GenreId = programmingGenre.Id }]
+            },
+            new Book
+            {
+                Title = "Unrelated Book",
+                Description = "No shared genres",
+                Price = 500,
+                PublishedYear = 2025,
+                BookGenres = [new BookGenre { GenreId = designGenre.Id }]
+            });
+        await _context.SaveChangesAsync();
+
+        var result = await _repository.GetRelatedBooksAsync(currentBook.Id, 2);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Best Genre Match", result[0].Title);
+        Assert.Equal("Newer Single Match", result[1].Title);
+        Assert.DoesNotContain(result, book => book.Id == currentBook.Id);
+        Assert.DoesNotContain(result, book => book.Title == "Unrelated Book");
+    }
+
+    [Fact]
+    public async Task GetRelatedBooksAsync_ReturnsEmpty_WhenBookHasNoGenres()
+    {
+        var book = new Book
+        {
+            Title = "Genreless Book",
+            Description = "No genres",
+            Price = 100,
+            PublishedYear = 2020
+        };
+        _context.Books.Add(book);
+        await _context.SaveChangesAsync();
+
+        var result = await _repository.GetRelatedBooksAsync(book.Id, 4);
+
+        Assert.Empty(result);
+    }
+
     public async Task DisposeAsync()
     {
         await _context.DisposeAsync();

@@ -272,4 +272,37 @@ public class BooksControllerTests
         await Assert.ThrowsAsync<NotFoundException>(() => _controller.GetBookById(9999));
     }
 
+    [Fact]
+    public async Task GetRelatedBooks_ReturnsRelatedBooks_ForExistingBook()
+    {
+        var currentBook = new BookReadDto { Id = 1, Title = "Current" };
+        IReadOnlyList<BookReadDto> relatedBooks =
+        [
+            new BookReadDto { Id = 2, Title = "Related" }
+        ];
+        _bookRepository.GetBookByIdAsync(1).Returns(currentBook);
+        _bookRepository.GetRelatedBooksAsync(1, 4).Returns(relatedBooks);
+
+        var result = await _controller.GetRelatedBooks(1);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(relatedBooks, okResult.Value);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(13)]
+    public async Task GetRelatedBooks_ThrowsBadRequest_ForInvalidLimit(int limit)
+    {
+        await Assert.ThrowsAsync<BadRequestException>(() =>
+            _controller.GetRelatedBooks(1, limit));
+    }
+
+    [Fact]
+    public async Task GetRelatedBooks_ThrowsNotFound_WhenBookDoesNotExist()
+    {
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _controller.GetRelatedBooks(999));
+    }
+
 }
