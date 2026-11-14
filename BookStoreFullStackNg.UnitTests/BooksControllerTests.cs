@@ -60,6 +60,28 @@ public class BooksControllerTests
         Assert.Equal(mockPagedBooks.PageSize, pagedList.PageSize);
     }
 
+    [Theory]
+    [InlineData(2025, 2020, null, null)]
+    [InlineData(null, null, 500d, 100d)]
+    [InlineData(null, null, -1d, null)]
+    public async Task GetBooks_ThrowsBadRequest_ForInvalidFilterRanges(
+        int? publishedFrom,
+        int? publishedTo,
+        double? minPrice,
+        double? maxPrice)
+    {
+        var query = new BookQueryParameter
+        {
+            PublishedFrom = publishedFrom,
+            PublishedTo = publishedTo,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice
+        };
+
+        await Assert.ThrowsAsync<BadRequestException>(() =>
+            _controller.GetBooks(query));
+    }
+
     [Fact]
     public async Task CreateBook_Returns_CreatedAtRoute_With_BookReadDto()
     {

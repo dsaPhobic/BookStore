@@ -158,20 +158,42 @@ public class BookRepository : IBookRepository
                 .ThenInclude(x => x.Author)
                 .Include(x => x.BookGenres)
                 .ThenInclude(x => x.Genre)
+                .AsNoTracking()
                 .AsQueryable();
 
         // filter by search term
-        if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
+        if (!string.IsNullOrWhiteSpace(queryParameters.SearchTerm))
         {
-            booksQuery = booksQuery.Where(a =>
-            a.Title.ToLower().Contains(queryParameters.SearchTerm)
-            );
+            var searchTerm = queryParameters.SearchTerm.Trim().ToLower();
+            booksQuery = booksQuery.Where(book =>
+                book.Title.ToLower().Contains(searchTerm)
+                || book.BookAuthors.Any(bookAuthor =>
+                    bookAuthor.Author.AuthorName.ToLower().Contains(searchTerm)));
         }
 
         // filter by publish year
-        if (queryParameters.PublishedFrom != null && queryParameters.PublishedTo != null)
+        if (queryParameters.PublishedFrom.HasValue)
         {
-            booksQuery = booksQuery.Where(a => a.PublishedYear >= queryParameters.PublishedFrom && a.PublishedYear <= queryParameters.PublishedTo);
+            booksQuery = booksQuery.Where(book =>
+                book.PublishedYear >= queryParameters.PublishedFrom.Value);
+        }
+
+        if (queryParameters.PublishedTo.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.PublishedYear <= queryParameters.PublishedTo.Value);
+        }
+
+        if (queryParameters.MinPrice.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.Price >= queryParameters.MinPrice.Value);
+        }
+
+        if (queryParameters.MaxPrice.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.Price <= queryParameters.MaxPrice.Value);
         }
 
         // filter by genreIds
