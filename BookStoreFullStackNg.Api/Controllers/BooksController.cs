@@ -114,10 +114,12 @@ public class BooksController : ControllerBase
 
 
     [AllowAnonymous]
-    [OutputCache(VaryByQueryKeys = ["PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "GenreIds"])]
+    [OutputCache(VaryByQueryKeys = ["PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "MinPrice", "MaxPrice", "GenreIds"])]
     [HttpGet]
     public async Task<IActionResult> GetBooks([FromQuery] BookQueryParameter queryParameter)
     {
+        ValidateBookQuery(queryParameter);
+
         var pagedBooks = await _bookRepo.GetBooksAsync(queryParameter); // have related data
         var books = pagedBooks.Items.Select(b =>
             new BookReadDto
@@ -133,6 +135,33 @@ public class BooksController : ControllerBase
             }).ToList();
         var newBookPagedList = new PagedList<BookReadDto>(books, pagedBooks.TotalCount, pagedBooks.PageNumber, pagedBooks.PageSize);
         return Ok(newBookPagedList);
+    }
+
+    private static void ValidateBookQuery(BookQueryParameter queryParameter)
+    {
+        if (queryParameter.PageSize <= 0)
+        {
+            throw new BadRequestException("Page size must be greater than zero");
+        }
+
+        if (queryParameter.PublishedFrom.HasValue
+            && queryParameter.PublishedTo.HasValue
+            && queryParameter.PublishedFrom > queryParameter.PublishedTo)
+        {
+            throw new BadRequestException("Published from year cannot be greater than published to year");
+        }
+
+        if (queryParameter.MinPrice < 0 || queryParameter.MaxPrice < 0)
+        {
+            throw new BadRequestException("Price filters cannot be negative");
+        }
+
+        if (queryParameter.MinPrice.HasValue
+            && queryParameter.MaxPrice.HasValue
+            && queryParameter.MinPrice > queryParameter.MaxPrice)
+        {
+            throw new BadRequestException("Minimum price cannot be greater than maximum price");
+        }
     }
 
     [HttpGet("{id}", Name = nameof(GetBookById))]
