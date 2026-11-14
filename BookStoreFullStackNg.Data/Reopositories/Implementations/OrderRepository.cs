@@ -1,14 +1,14 @@
-﻿using BookStoreFullStackNg.Data.Constants;
+using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Domain;
 using BookStoreFullStackNg.Data.DTOs.Common;
 using BookStoreFullStackNg.Data.DTOs.Order;
+using BookStoreFullStackNg.Data.Exceptions;
 using BookStoreFullStackNg.Data.Helpers;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookStoreFullStackNg.Data.Reopositories.Implementations;
-
 public class OrderRepository : IOrderRepository
 {
     private readonly BookStoreContext _context;
@@ -24,6 +24,28 @@ public class OrderRepository : IOrderRepository
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            // Revalidate coupons at checkout; the apply endpoint is only a preview.
+            double discountPercent = 0;
+            double maxDiscount = double.MaxValue;
+            string? couponCode = null;
+            if (!string.IsNullOrWhiteSpace(orderToCreate.CouponCode))
+            {
+                var normalizedCode = orderToCreate.CouponCode.Trim().ToUpperInvariant();
+                var coupon = await _context.Coupons
+                    .FirstOrDefaultAsync(c => c.Code == normalizedCode);
+
+                if (coupon == null || !coupon.IsUsable(DateTime.UtcNow))
+                {
+                    throw new CouponValidationException("This coupon is invalid, expired, or has reached its usage limit.");
+                }
+
+                discountPercent = coupon.DiscountPercent;
+                maxDiscount = coupon.MaxDiscount ?? double.MaxValue;
+                couponCode = coupon.Code;
+                coupon.UsageCount++;
+                _context.Coupons.Update(coupon);
+            }
+
             var order = new Order
             {
                 Name = orderToCreate.Name,
@@ -31,6 +53,8 @@ public class OrderRepository : IOrderRepository
                 MobileNumber = orderToCreate.MobileNumber,
                 OrderDate = DateTime.UtcNow,
                 TaxInPercent = Tax.TaxInPercent,
+                DiscountPercent = discountPercent,
+                CouponCode = couponCode,
                 OrderStatus = OrderStatus.Pending,
                 UserId = userId,
             };
@@ -74,12 +98,17 @@ public class OrderRepository : IOrderRepository
             }
             await _context.SaveChangesAsync();
 
-            // payment
-            var total = subTotal * (order.TaxInPercent / 100);
+            var pricing = OrderPricing.Calculate(
+                subTotal,
+                order.TaxInPercent,
+                order.DiscountPercent,
+                maxDiscount);
+            order.DiscountAmount = pricing.DiscountAmount;
+            await _context.SaveChangesAsync();
             var payment = new Payment
             {
                 OrderId = order.Id,
-                Amount = total,
+                Amount = pricing.Total,
                 Status = PaymentStatus.Pending,
                 Method = (PaymentMethod)orderToCreate.PaymentMethod
             };
@@ -106,6 +135,7 @@ public class OrderRepository : IOrderRepository
     public async Task<PagedList<Order>> UserOrder(int userId, UserOrdersQueryParameters queryParameters)
     {
         var userOrderQuery = _context.Orders
+                                .Include(order => order.Payment)
                                 .Include(c => c.OrderItems)
                                 .ThenInclude(c => c.Book)
                                 .ThenInclude(b => b.BookGenres)
@@ -150,6 +180,7 @@ public class OrderRepository : IOrderRepository
     public async Task<PagedList<Order>> GetOrders(UserOrdersQueryParameters queryParameters)
     {
         var userOrderQuery = _context.Orders
+                                .Include(order => order.Payment)
                                 .Include(c => c.OrderItems)
                                 .ThenInclude(c => c.Book)
                                 .ThenInclude(b => b.BookGenres)

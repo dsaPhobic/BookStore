@@ -96,11 +96,11 @@ import {
             mat-sort-header
             sortActionDescription="sort by total"
           >
-            Total
+            Total paid (incl. tax & discount)
           </th>
           <td mat-cell *matCellDef="let element">
             <strong class="total-amount">{{
-              element.total | currency : "USD"
+              element.total | currency : "INR"
             }}</strong>
           </td>
         </ng-container>

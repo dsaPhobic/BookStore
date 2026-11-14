@@ -5,17 +5,21 @@ import {
   inject,
   Input,
   Output,
+  signal,
 } from "@angular/core";
 import { PaymentMethodModel } from "../data/payment-method.model";
 import { OrderCreateModel } from "../data/order-create.model";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatInputModule } from "@angular/material/input";
 import { MatFormFieldModule } from "@angular/material/form-field";
-import { NgFor, NgIf } from "@angular/common";
+import { CurrencyPipe, NgFor, NgIf } from "@angular/common";
 import { MatSelectModule } from "@angular/material/select";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterModule } from "@angular/router";
+import { OrderService } from "../data/order.service";
+import { CouponApplyResultModel } from "../data/coupon-apply-result.model";
+import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: "app-create-order-form",
@@ -29,6 +33,7 @@ import { RouterModule } from "@angular/router";
     RouterModule,
     NgIf,
     NgFor,
+    CurrencyPipe,
     MatSelectModule,
   ],
   template: `
@@ -97,10 +102,37 @@ import { RouterModule } from "@angular/router";
           </mat-error>
         </mat-form-field>
 
+        <div class="coupon-row">
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>local_offer</mat-icon>
+            <mat-label>Discount code</mat-label>
+            <input
+              matInput
+              formControlName="couponCode"
+              (input)="clearCouponResult()"
+              [readonly]="couponApplying()"
+            />
+          </mat-form-field>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="applyCoupon()"
+            [disabled]="couponApplying() || !f['couponCode'].value.trim()"
+          >
+            {{ couponApplying() ? "Checking..." : "Apply" }}
+          </button>
+        </div>
+        <p class="coupon-message" *ngIf="couponResult() as result">
+          {{ result.message }} You save
+          {{ result.discountAmount | currency : "INR" }}.
+          Estimated total: {{ result.total | currency : "INR" }}.
+        </p>
+        <p class="coupon-error" *ngIf="couponError() as error">{{ error }}</p>
+
         <div class="btn-row">
           <a mat-stroked-button routerLink="/cart">Back to Cart</a>
           <button
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || couponApplying()"
             mat-flat-button
             color="accent"
             class="place-btn"
@@ -129,6 +161,27 @@ import { RouterModule } from "@angular/router";
         width: 100%;
       }
 
+      .coupon-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .coupon-row button {
+        min-width: 90px;
+        height: 56px;
+      }
+
+      .coupon-message {
+        color: var(--bs-success);
+        margin: -4px 0 8px;
+      }
+
+      .coupon-error {
+        color: var(--bs-danger, #b42318);
+        margin: -4px 0 8px;
+      }
+
       .btn-row {
         display: flex;
         justify-content: flex-end;
@@ -148,20 +201,57 @@ export class CreateOrderFormComponent {
   @Input({ required: true }) paymentMethods!: ReadonlyArray<PaymentMethodModel>;
   @Output() onOrderSubmit = new EventEmitter<OrderCreateModel>();
   fb = inject(FormBuilder);
+  private readonly orderService = inject(OrderService);
+  couponApplying = signal(false);
+  couponResult = signal<CouponApplyResultModel | null>(null);
+  couponError = signal<string | null>(null);
 
-  form = this.fb.group({
+  form = this.fb.nonNullable.group({
     name: ["", Validators.required],
     email: ["", [Validators.required, Validators.email]],
     mobileNumber: ["", Validators.required],
-    paymentMethod: [0, Validators.required],
+    paymentMethod: [0, [Validators.required, Validators.min(1)]],
+    couponCode: [""],
   });
 
   get f() {
     return this.form.controls;
   }
 
+  clearCouponResult() {
+    this.couponResult.set(null);
+    this.couponError.set(null);
+  }
+
+  applyCoupon() {
+    const code = this.f["couponCode"].value?.trim();
+    if (!code || this.couponApplying()) {
+      return;
+    }
+
+    this.couponApplying.set(true);
+    this.couponError.set(null);
+    this.couponResult.set(null);
+    this.orderService.applyCoupon(code).subscribe({
+      next: (result) => {
+        this.couponResult.set(result);
+        this.couponApplying.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.couponResult.set(null);
+        this.couponError.set(
+          error.error?.message ?? "Could not apply this discount code."
+        );
+        this.couponApplying.set(false);
+      },
+    });
+  }
+
   submit() {
-    const orderData: OrderCreateModel = Object.assign(this.form.value);
+    const orderData: OrderCreateModel = {
+      ...this.form.getRawValue(),
+      couponCode: this.couponResult()?.code,
+    };
     this.onOrderSubmit.emit(orderData);
     this.form.reset();
   }
