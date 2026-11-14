@@ -176,6 +176,26 @@ public class BooksController : ControllerBase
         return Ok(book);
     }
 
+    [HttpGet("{id}/related")]
+    [AllowAnonymous]
+    [OutputCache(VaryByQueryKeys = ["limit"])]
+    public async Task<IActionResult> GetRelatedBooks(int id, [FromQuery] int limit = 4)
+    {
+        if (limit is < 1 or > 12)
+        {
+            throw new BadRequestException("Related books limit must be between 1 and 12");
+        }
+
+        BookReadDto? currentBook = await _bookRepo.GetBookByIdAsync(id);
+        if (currentBook == null)
+        {
+            throw new NotFoundException($"Book with id:{id} does not found");
+        }
+
+        var relatedBooks = await _bookRepo.GetRelatedBooksAsync(id, limit);
+        return Ok(relatedBooks);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBook(int id,IOutputCacheStore cache)
     {
