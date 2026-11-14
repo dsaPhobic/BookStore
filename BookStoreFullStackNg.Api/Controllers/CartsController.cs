@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Api.Helpers.Wrapper;
 using BookStoreFullStackNg.Data.Constants;
@@ -136,6 +136,25 @@ public class CartsController : ControllerBase
         IEnumerable<Cart> carts = await _cartRepo.GetCartsAsync();
         IEnumerable<CartReadDto?> cartToReturn= _cartItemMapper.MapCartsToCartReadDtos(carts);
         return Ok(cartToReturn);
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> ClearCart()
+    {
+        var userName = User.Identity?.Name;
+        if (string.IsNullOrEmpty(userName))
+        {
+            throw new BadRequestException("User is not logged in");
+        }
+
+        var user = await _userRepo.GetUserByUserNameAsync(userName);
+        if (user == null)
+        {
+            throw new BadRequestException("Invalid username");
+        }
+
+        await _cartRepo.ClearCartAsync(user.Id);
+        return NoContent();
     }
 
 

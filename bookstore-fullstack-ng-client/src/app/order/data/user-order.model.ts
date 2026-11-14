@@ -10,6 +10,9 @@ export interface UserOrderModel {
   subTotal: number;
   tax: number;
   total: number;
+  discountPercent: number;
+  discountAmount: number;
+  couponCode: string | null;
   payment: null;
   orderItems: OrderItem[];
 }
@@ -19,5 +22,6 @@ export interface OrderItem {
   orderId: number;
   quantity: number;
   price: number;
+  paidTotal: number;
   book: BookCartModel;
 }

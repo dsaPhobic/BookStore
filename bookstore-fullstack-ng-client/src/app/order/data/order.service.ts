@@ -6,6 +6,7 @@ import { environment } from "../../../environments/environment.development";
 import { OrderCreateModel } from "./order-create.model";
 import { OrderItem, UserOrderModel } from "./user-order.model";
 import { PagedList } from "../../common/paged-list.model";
+import { CouponApplyResultModel } from "./coupon-apply-result.model";
 
 @Injectable({ providedIn: "root" })
 export class OrderService {
@@ -17,6 +18,12 @@ export class OrderService {
 
   createOrder = (data: OrderCreateModel) =>
     this.http.post<any>(this.baseUrl, data);
+
+  applyCoupon = (code: string): Observable<CouponApplyResultModel> =>
+    this.http.post<CouponApplyResultModel>(
+      environment.baseUrl + "/api/coupons/apply",
+      { code }
+    );
 
   getUserOrders({
     pageSize = 10,

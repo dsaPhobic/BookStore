@@ -121,6 +121,9 @@ import { User } from "./account/data/user.model";
       <a mat-menu-item routerLink="/genres">
         <mat-icon>category</mat-icon><span>Genres</span>
       </a>
+      <a mat-menu-item routerLink="/coupons">
+        <mat-icon>local_offer</mat-icon><span>Coupons</span>
+      </a>
       <mat-divider></mat-divider>
       <a mat-menu-item routerLink="/customer-order">
         <mat-icon>receipt_long</mat-icon><span>Customer Orders</span>
@@ -179,6 +182,9 @@ import { User } from "./account/data/user.model";
           </a>
           <a mat-menu-item routerLink="/genres">
             <mat-icon>category</mat-icon><span>Manage Genres</span>
+          </a>
+          <a mat-menu-item routerLink="/coupons">
+            <mat-icon>local_offer</mat-icon><span>Manage Coupons</span>
           </a>
           <a mat-menu-item routerLink="/customer-order">
             <mat-icon>receipt_long</mat-icon><span>Customer Orders</span>

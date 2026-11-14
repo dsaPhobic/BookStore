@@ -45,6 +45,16 @@ import { CartUpdateModel } from "./data/cart-update.model";
       <ng-container *ngIf="cartItems.length > 0; else noitems">
         <div class="cart-grid">
           <div class="cart-items-col">
+            <div class="cart-items-actions">
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="onClearCart()"
+                title="Clear all items from cart"
+              >
+                <mat-icon>delete_sweep</mat-icon> Clear Cart
+              </button>
+            </div>
             <app-cart-item
               *ngFor="let cartItem of cartItems; trackBy: trackById"
               [cartItem]="cartItem"
@@ -85,6 +95,11 @@ import { CartUpdateModel } from "./data/cart-update.model";
         display: flex;
         flex-direction: column;
         gap: 14px;
+      }
+
+      .cart-items-actions {
+        display: flex;
+        justify-content: flex-end;
       }
 
       @media (max-width: 860px) {
@@ -146,6 +161,12 @@ export class CartComponent {
   onDeleteItem(id: number) {
     if (window.confirm("Remove this book from your cart?")) {
       this.store.dispatch(CartActions.deleteCartItem({ id }));
+    }
+  }
+
+  onClearCart() {
+    if (window.confirm("Remove all items from your cart?")) {
+      this.store.dispatch(CartActions.clearCart());
     }
   }
 
