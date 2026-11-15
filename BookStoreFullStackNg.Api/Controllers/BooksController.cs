@@ -26,7 +26,7 @@ public class BooksController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly IBookRepository _bookRepo;
-    private readonly ICloudinaryService? _cloudinaryService;
+    private readonly ICloudinaryService _cloudinaryService;
     private readonly IIsbnLookupService? _isbnLookupService;
     private readonly BookStoreContext? _context;
 
@@ -34,7 +34,7 @@ public class BooksController : ControllerBase
     public BooksController(
         IMapper mapper,
         IBookRepository bookRepo,
-        ICloudinaryService? cloudinaryService = null,
+        ICloudinaryService cloudinaryService,
         IIsbnLookupService? isbnLookupService = null,
         BookStoreContext? context = null)
     {
@@ -53,13 +53,13 @@ public class BooksController : ControllerBase
             throw new BadRequestException("File size should not exceed 3 MB");
         }
 
-        if (bookCreateDto.ImageFile != null && _cloudinaryService != null)
+        if (bookCreateDto.ImageFile != null)
         {
             var uploadResult = await _cloudinaryService.UploadImageAsync(bookCreateDto.ImageFile, "books", 400, 600);
             bookCreateDto.ImageUrl = uploadResult.Url;
             bookCreateDto.ImagePublicId = uploadResult.PublicId;
         }
-        else if (_cloudinaryService != null && !string.IsNullOrWhiteSpace(bookCreateDto.ImageUrl) && IsRemoteUrl(bookCreateDto.ImageUrl) && !IsCloudinaryUrl(bookCreateDto.ImageUrl))
+        else if (!string.IsNullOrWhiteSpace(bookCreateDto.ImageUrl) && IsRemoteUrl(bookCreateDto.ImageUrl) && !IsCloudinaryUrl(bookCreateDto.ImageUrl))
         {
             var uploadResult = await _cloudinaryService.UploadImageFromUrlAsync(bookCreateDto.ImageUrl, "books", 400, 600);
             if (!string.IsNullOrEmpty(uploadResult.Url))
@@ -97,21 +97,18 @@ public class BooksController : ControllerBase
                 throw new BadRequestException("File size should not exceed 3 MB");
             }
 
-            if (_cloudinaryService != null)
+            var uploadResult = await _cloudinaryService.UploadImageAsync(bookToUpdate.ImageFile, "books", 400, 600);
+
+            // Delete old image from Cloudinary
+            if (!string.IsNullOrEmpty(existingBook.ImagePublicId))
             {
-                var uploadResult = await _cloudinaryService.UploadImageAsync(bookToUpdate.ImageFile, "books", 400, 600);
-
-                // Delete old image from Cloudinary
-                if (!string.IsNullOrEmpty(existingBook.ImagePublicId))
-                {
-                    await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
-                }
-
-                bookToUpdate.ImageUrl = uploadResult.Url;
-                bookToUpdate.ImagePublicId = uploadResult.PublicId;
+                await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
             }
+
+            bookToUpdate.ImageUrl = uploadResult.Url;
+            bookToUpdate.ImagePublicId = uploadResult.PublicId;
         }
-        else if (_cloudinaryService != null && !string.IsNullOrWhiteSpace(bookToUpdate.ImageUrl) && IsRemoteUrl(bookToUpdate.ImageUrl) && !IsCloudinaryUrl(bookToUpdate.ImageUrl))
+        else if (!string.IsNullOrWhiteSpace(bookToUpdate.ImageUrl) && IsRemoteUrl(bookToUpdate.ImageUrl) && !IsCloudinaryUrl(bookToUpdate.ImageUrl))
         {
             var uploadResult = await _cloudinaryService.UploadImageFromUrlAsync(bookToUpdate.ImageUrl, "books", 400, 600);
             if (!string.IsNullOrEmpty(uploadResult.Url))
@@ -257,7 +254,7 @@ public class BooksController : ControllerBase
 
         await _bookRepo.DeleteBookAsync(bookEntity);
 
-        if (!string.IsNullOrEmpty(existingBook.ImagePublicId) && _cloudinaryService != null)
+        if (!string.IsNullOrEmpty(existingBook.ImagePublicId))
         {
             await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
         }
