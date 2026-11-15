@@ -20,23 +20,19 @@ public static class DatabaseRegistrationExtensions
 
         if (usePostgreSql)
         {
-            // Both contexts connect to PostgreSQL (Supabase / Cloud) with automatic retry resiliency
+            // Both contexts connect to PostgreSQL (Supabase / Cloud)
+            // QuerySplittingBehavior.SplitQuery avoids cartesian explosion on multiple collection includes
+            // Default ExecutionStrategy allows explicit user-initiated transactions (BeginTransactionAsync)
             services.AddDbContext<BookStoreContext>(options =>
                 options.UseNpgsql(pgConn, npgsqlOptions =>
                 {
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(5),
-                        errorCodesToAdd: null);
+                    npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 }));
 
             services.AddDbContext<AuthContext>(options =>
                 options.UseNpgsql(pgConn, npgsqlOptions =>
                 {
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(5),
-                        errorCodesToAdd: null);
+                    npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 }));
         }
         else
