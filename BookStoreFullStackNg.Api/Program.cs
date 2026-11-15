@@ -1,10 +1,12 @@
 using System.Text;
 using BookStoreFullStackNg.Api.Helpers.Wrapper;
+using BookStoreFullStackNg.Api.Hubs;
 using BookStoreFullStackNg.Api.Middlewares;
 using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +32,10 @@ builder.Services.Configure<BookStoreFullStackNg.Data.Services.CloudinarySettings
 builder.Services.AddDbContext<BookStoreContext>(options => options.UseSqlite("Data source= BookStore.db"));
 
 builder.Services.AddDbContext<AuthContext>(options => options.UseSqlite("Data source= Auth.db"));
+
+// Real-time notifications for signed-in customers
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, UserNameUserIdProvider>();
 
 // For Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -57,6 +63,23 @@ builder.Services.AddAuthentication(options =>
                     ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
                     ClockSkew = TimeSpan.Zero,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
+                };
+
+                // Browsers cannot send an Authorization header on a WebSocket
+                // handshake, so SignalR passes the JWT as a query string value.
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments(NotificationHub.Route))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
@@ -119,6 +142,8 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>(NotificationHub.Route);
 
 // seeding default auth data
 await AuthSeeder.SeedData(app);

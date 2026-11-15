@@ -1,5 +1,6 @@
 ﻿using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Api.Helpers;
+using BookStoreFullStackNg.Api.Hubs;
 using BookStoreFullStackNg.Api.Models;
 using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.DTOs.Common;
@@ -7,6 +8,7 @@ using BookStoreFullStackNg.Data.DTOs.Order;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BookStoreFullStackNg.Api.Controllers;
 
@@ -17,10 +19,18 @@ public class OrdersController : ControllerBase
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IUserRepository _userRepository;
-    public OrdersController(IOrderRepository orderRepository, IUserRepository userRepository)
+    private readonly IHubContext<NotificationHub> _notificationHub;
+    private readonly ILogger<OrdersController> _logger;
+    public OrdersController(
+        IOrderRepository orderRepository,
+        IUserRepository userRepository,
+        IHubContext<NotificationHub> notificationHub,
+        ILogger<OrdersController> logger)
     {
         _orderRepository = orderRepository;
         _userRepository = userRepository;
+        _notificationHub = notificationHub;
+        _logger = logger;
     }
 
     [HttpGet("payment-methods")]
@@ -135,8 +145,51 @@ public class OrdersController : ControllerBase
                 $"Cannot change order status from {order.OrderStatus} to {statusUpdate.OrderStatus}");
         }
 
+        var previousStatus = order.OrderStatus;
         await _orderRepository.UpdateOrderStatus(orderId, statusUpdate.OrderStatus);
+        await NotifyCustomerOfStatusChange(order.UserId, orderId, previousStatus, statusUpdate.OrderStatus);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Pushes the new status to the customer's open SignalR connections.
+    /// Notification failures must never undo a status change that was already
+    /// persisted, so delivery errors are swallowed.
+    /// </summary>
+    private async Task NotifyCustomerOfStatusChange(
+        int userId,
+        int orderId,
+        OrderStatus previousStatus,
+        OrderStatus orderStatus)
+    {
+        try
+        {
+            var customer = await _userRepository.GetUserByIdAsync(userId);
+            if (customer is null || string.IsNullOrEmpty(customer.Username))
+            {
+                return;
+            }
+
+            var notification = OrderStatusChangedNotification.Create(
+                orderId,
+                previousStatus,
+                orderStatus,
+                DateTime.UtcNow);
+
+            await _notificationHub.Clients
+                .User(customer.Username)
+                .SendAsync(NotificationHub.OrderStatusChangedEvent, notification);
+        }
+        catch (Exception ex)
+        {
+            // The order status is already saved; a missed notification is
+            // recoverable the next time the customer opens their orders.
+            _logger.LogWarning(
+                ex,
+                "Could not notify customer {UserId} about the status change of order {OrderId}",
+                userId,
+                orderId);
+        }
     }
 
 }
