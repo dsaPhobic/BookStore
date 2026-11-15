@@ -7,6 +7,8 @@ import { OrderCreateModel } from "./order-create.model";
 import { OrderItem, UserOrderModel } from "./user-order.model";
 import { PagedList } from "../../common/paged-list.model";
 import { CouponApplyResultModel } from "./coupon-apply-result.model";
+import { DemoNetBankingOrderModel } from "./demo-netbanking-order.model";
+import { ShippingRateModel } from "./shipping-rate.model";
 
 @Injectable({ providedIn: "root" })
 export class OrderService {
@@ -16,8 +18,20 @@ export class OrderService {
   getPaymentMethods = (): Observable<Array<PaymentMethodModel>> =>
     this.http.get<Array<PaymentMethodModel>>(this.baseUrl + "/payment-methods");
 
-  createOrder = (data: OrderCreateModel) =>
-    this.http.post<any>(this.baseUrl, data);
+  getShippingRates = (): Observable<Array<ShippingRateModel>> =>
+    this.http.get<Array<ShippingRateModel>>(this.baseUrl + "/shipping-rates");
+
+  createOrder = (
+    data: OrderCreateModel
+  ): Observable<DemoNetBankingOrderModel | null> =>
+    this.http.post<DemoNetBankingOrderModel | null>(this.baseUrl, data);
+
+  completeDemoNetBankingPayment(orderId: number): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/${orderId}/demo-netbanking-payment`,
+      {}
+    );
+  }
 
   applyCoupon = (code: string): Observable<CouponApplyResultModel> =>
     this.http.post<CouponApplyResultModel>(

@@ -112,7 +112,7 @@ import { BookListPublicComponent } from "../book-public/ui/book-list-public.comp
           <div class="perk-icon"><mat-icon>lock</mat-icon></div>
           <div>
             <h4>Secure Checkout</h4>
-            <p>Flexible COD, Card, and UPI payment options.</p>
+            <p>Choose Cash on Delivery or NetBanking at checkout.</p>
           </div>
         </div>
         <div class="perk">

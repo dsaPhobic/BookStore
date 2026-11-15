@@ -1,4 +1,5 @@
 using BookStoreFullStackNg.Data.Constants;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStoreFullStackNg.Data.Domain;
 
@@ -9,6 +10,9 @@ public class Order
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string MobileNumber { get; set; } = string.Empty;
+    [MaxLength(500)]
+    public string ShippingAddress { get; set; } = string.Empty;
+    public double ShippingFee { get; set; }
     public double TaxInPercent { get; set; }
     /// <summary>Discount percentage applied via coupon (0 if none).</summary>
     public double DiscountPercent { get; set; } = 0;

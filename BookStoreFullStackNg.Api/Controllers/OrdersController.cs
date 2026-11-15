@@ -5,10 +5,12 @@ using BookStoreFullStackNg.Api.Models;
 using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.DTOs.Common;
 using BookStoreFullStackNg.Data.DTOs.Order;
+using BookStoreFullStackNg.Data.Helpers;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Hosting;
 
 namespace BookStoreFullStackNg.Api.Controllers;
 
@@ -17,18 +19,32 @@ namespace BookStoreFullStackNg.Api.Controllers;
 [Authorize]
 public class OrdersController : ControllerBase
 {
+    private static readonly PaymentMethod[] DevelopmentPaymentMethods =
+    [
+        PaymentMethod.COD,
+        PaymentMethod.NetBanking
+    ];
+
+    private static readonly PaymentMethod[] ProductionPaymentMethods =
+    [
+        PaymentMethod.COD
+    ];
+
     private readonly IOrderRepository _orderRepository;
     private readonly IUserRepository _userRepository;
+    private readonly bool _isDevelopment;
     private readonly IHubContext<NotificationHub> _notificationHub;
     private readonly ILogger<OrdersController> _logger;
     public OrdersController(
         IOrderRepository orderRepository,
         IUserRepository userRepository,
         IHubContext<NotificationHub> notificationHub,
-        ILogger<OrdersController> logger)
+        ILogger<OrdersController> logger,
+        IHostEnvironment? hostEnvironment = null)
     {
         _orderRepository = orderRepository;
         _userRepository = userRepository;
+        _isDevelopment = hostEnvironment?.IsDevelopment() ?? false;
         _notificationHub = notificationHub;
         _logger = logger;
     }
@@ -37,19 +53,38 @@ public class OrdersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetPaymentMethods()
     {
-        var paymentStatusList = Enum.GetValues(typeof(PaymentMethod))
-                                    .Cast<PaymentMethod>()
-                                    .Select(method => new PaymentMethodModel
-                                    {
-                                        Value = (int)method,
-                                        Name = method.ToString()
-                                    }).ToList();
-        return Ok(paymentStatusList);
+        var paymentMethods = GetAvailablePaymentMethods()
+            .Select(method => new PaymentMethodModel
+            {
+                Value = (int)method,
+                Name = method.ToString()
+            });
+        return Ok(paymentMethods);
     }
+
+    [HttpGet("shipping-rates")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetShippingRates() => Ok(ShippingPricing.Rates);
 
     [HttpPost]
     public async Task<IActionResult> CreateOrder(OrderCreateDto orderToCreate)
     {
+        if (string.IsNullOrWhiteSpace(orderToCreate.ShippingAddress))
+        {
+            throw new BadRequestException("Shipping address is required");
+        }
+
+        if (!Enum.IsDefined(orderToCreate.ShippingZone))
+        {
+            throw new BadRequestException("Unsupported shipping zone");
+        }
+
+        var paymentMethod = (PaymentMethod)orderToCreate.PaymentMethod;
+        if (!GetAvailablePaymentMethods().Contains(paymentMethod))
+        {
+            throw new BadRequestException("Unsupported payment method");
+        }
+
         // get userId from userName
         string? username = User?.Identity?.Name;
         if (string.IsNullOrEmpty(username))
@@ -63,9 +98,49 @@ public class OrdersController : ControllerBase
             throw new BadRequestException("User is not logged in");
         }
 
-        await _orderRepository.CreateOrder(user.Id, orderToCreate);
+        var order = await _orderRepository.CreateOrder(user.Id, orderToCreate);
+        if (paymentMethod == PaymentMethod.NetBanking)
+        {
+            return Ok(new DemoNetBankingOrderDto
+            {
+                OrderId = order.Id,
+                Amount = order.Payment.Amount
+            });
+        }
+
         return NoContent();
     }
+
+    [HttpPost("{orderId:int}/demo-netbanking-payment")]
+    public async Task<IActionResult> CompleteDemoNetBankingPayment(int orderId)
+    {
+        if (!_isDevelopment)
+        {
+            return NotFound();
+        }
+
+        var username = User?.Identity?.Name;
+        if (string.IsNullOrEmpty(username))
+        {
+            throw new BadRequestException("User is not logged in");
+        }
+
+        var user = await _userRepository.GetUserByUserNameAsync(username);
+        if (user == null)
+        {
+            throw new BadRequestException("User is not logged in");
+        }
+
+        var completed = await _orderRepository.CompleteDemoNetBankingPayment(
+            orderId,
+            user.Id);
+        return completed ? NoContent() : NotFound();
+    }
+
+    private IEnumerable<PaymentMethod> GetAvailablePaymentMethods() =>
+        _isDevelopment
+            ? DevelopmentPaymentMethods
+            : ProductionPaymentMethods;
 
     [HttpGet("user-orders")]
     [HttpGet("my-orders")]
