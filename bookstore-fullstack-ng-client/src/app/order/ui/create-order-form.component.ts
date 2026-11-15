@@ -4,6 +4,7 @@ import {
   EventEmitter,
   inject,
   Input,
+  OnInit,
   Output,
   signal,
 } from "@angular/core";
@@ -20,6 +21,8 @@ import { RouterModule } from "@angular/router";
 import { OrderService } from "../data/order.service";
 import { CouponApplyResultModel } from "../data/coupon-apply-result.model";
 import { HttpErrorResponse } from "@angular/common/http";
+import { AccountService } from "../../account/data/account.service";
+import { ShippingRateModel } from "../data/shipping-rate.model";
 
 @Component({
   selector: "app-create-order-form",
@@ -65,6 +68,10 @@ import { HttpErrorResponse } from "@angular/common/http";
           </mat-error>
         </mat-form-field>
 
+        <p class="profile-error" *ngIf="profileError() as error" role="alert">
+          {{ error }}
+        </p>
+
         <mat-form-field appearance="outline">
           <mat-icon matPrefix>phone</mat-icon>
           <mat-label>Mobile Number</mat-label>
@@ -80,6 +87,52 @@ import { HttpErrorResponse } from "@angular/common/http";
             >
           </mat-error>
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>location_on</mat-icon>
+          <mat-label>Delivery Address</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            formControlName="shippingAddress"
+            placeholder="Street, building, ward, district, city/province"
+          ></textarea>
+          <mat-error
+            *ngIf="
+              f['shippingAddress'].invalid &&
+              (f['shippingAddress'].dirty || f['shippingAddress'].touched)
+            "
+          >
+            Delivery address is required (maximum 500 characters)
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-icon matPrefix>local_shipping</mat-icon>
+          <mat-label>Delivery Area</mat-label>
+          <mat-select formControlName="shippingZone">
+            <mat-option [value]="0">Select delivery area</mat-option>
+            <mat-option *ngFor="let rate of shippingRates" [value]="rate.zone">
+              {{ rate.label }} — {{ rate.fee | currency : "USD" }}
+            </mat-option>
+          </mat-select>
+          <mat-error
+            *ngIf="
+              f['shippingZone'].invalid &&
+              (f['shippingZone'].dirty || f['shippingZone'].touched)
+            "
+          >
+            Delivery area is required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="shipping-preview" *ngIf="selectedShippingRate() as rate">
+          <span>Delivery fee</span>
+          <strong>{{ rate.fee | currency : "USD" }}</strong>
+        </div>
+        <p class="shipping-hint">
+          Shipping is added after any coupon discount.
+        </p>
 
         <mat-form-field appearance="outline">
           <mat-icon matPrefix>payments</mat-icon>
@@ -117,7 +170,11 @@ import { HttpErrorResponse } from "@angular/common/http";
             mat-stroked-button
             type="button"
             (click)="applyCoupon()"
-            [disabled]="couponApplying() || !f['couponCode'].value.trim()"
+            [disabled]="
+              couponApplying() ||
+              !f['couponCode'].value.trim() ||
+              !selectedShippingRate()
+            "
           >
             {{ couponApplying() ? "Checking..." : "Apply" }}
           </button>
@@ -125,7 +182,8 @@ import { HttpErrorResponse } from "@angular/common/http";
         <p class="coupon-message" *ngIf="couponResult() as result">
           {{ result.message }} You save
           {{ result.discountAmount | currency : "USD" }}.
-          Estimated total: {{ result.total | currency : "USD" }}.
+          Estimated total:
+          {{ result.total + selectedShippingFee() | currency : "USD" }}.
         </p>
         <p class="coupon-error" *ngIf="couponError() as error">{{ error }}</p>
 
@@ -182,6 +240,34 @@ import { HttpErrorResponse } from "@angular/common/http";
         margin: -4px 0 8px;
       }
 
+      .profile-error,
+      .shipping-hint {
+        margin: -4px 0 8px;
+        color: var(--bs-muted);
+        font-size: 13px;
+      }
+
+      .profile-error {
+        color: var(--bs-danger, #b42318);
+      }
+
+      .shipping-preview {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border: 1px solid var(--bs-border);
+        border-radius: var(--bs-radius-sm);
+        background: var(--bs-surface-2);
+      }
+
+      .shipping-preview span {
+        color: var(--bs-muted);
+      }
+
+      .shipping-hint {
+        margin-top: -6px;
+      }
+
       .btn-row {
         display: flex;
         justify-content: flex-end;
@@ -197,25 +283,60 @@ import { HttpErrorResponse } from "@angular/common/http";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateOrderFormComponent {
+export class CreateOrderFormComponent implements OnInit {
   @Input({ required: true }) paymentMethods!: ReadonlyArray<PaymentMethodModel>;
+  @Input({ required: true }) shippingRates!: ReadonlyArray<ShippingRateModel>;
   @Output() onOrderSubmit = new EventEmitter<OrderCreateModel>();
   fb = inject(FormBuilder);
   private readonly orderService = inject(OrderService);
+  private readonly accountService = inject(AccountService);
   couponApplying = signal(false);
   couponResult = signal<CouponApplyResultModel | null>(null);
   couponError = signal<string | null>(null);
+  profileError = signal<string | null>(null);
 
   form = this.fb.nonNullable.group({
     name: ["", Validators.required],
     email: ["", [Validators.required, Validators.email]],
     mobileNumber: ["", Validators.required],
+    shippingAddress: ["", [Validators.required, Validators.maxLength(500)]],
+    shippingZone: [0, [Validators.required, Validators.min(1)]],
     paymentMethod: [0, [Validators.required, Validators.min(1)]],
     couponCode: [""],
   });
 
+  ngOnInit(): void {
+    this.accountService.getProfile().subscribe({
+      next: (profile) => {
+        if (!this.f["name"].dirty && !this.f["name"].value) {
+          this.f["name"].setValue(profile.name);
+        }
+        if (!this.f["email"].dirty && !this.f["email"].value) {
+          this.f["email"].setValue(profile.email);
+        }
+      },
+      error: () => {
+        this.profileError.set(
+          "Could not load your profile. You can still enter your name and email manually."
+        );
+      },
+    });
+  }
+
   get f() {
     return this.form.controls;
+  }
+
+  selectedShippingRate(): ShippingRateModel | null {
+    return (
+      this.shippingRates.find(
+        (rate) => rate.zone === this.f["shippingZone"].value
+      ) ?? null
+    );
+  }
+
+  selectedShippingFee(): number {
+    return this.selectedShippingRate()?.fee ?? 0;
   }
 
   clearCouponResult() {

@@ -9,6 +9,8 @@ public class UserOrderDto
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string MobileNumber { get; set; } = string.Empty;
+    public string ShippingAddress { get; set; } = string.Empty;
+    public double ShippingFee { get; set; }
     public DateTime OrderDate { get; set; }
     public OrderStatus OrderStatus { get; set; }
     public Payment Payment { get; set; } = null!;

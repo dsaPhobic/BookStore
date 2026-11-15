@@ -7,7 +7,8 @@ namespace BookStoreFullStackNg.Data.Reopositories.Interfaces;
 
 public interface IOrderRepository
 {
-    Task CreateOrder(int userId,OrderCreateDto orderToCreate);
+    Task<Order> CreateOrder(int userId, OrderCreateDto orderToCreate);
+    Task<bool> CompleteDemoNetBankingPayment(int orderId, int userId);
     Task<PagedList<Order>> UserOrder(int userId, UserOrdersQueryParameters queryParameters);
     Task<PagedList<Order>> GetOrders(UserOrdersQueryParameters queryParameters);
     Task<IEnumerable<OrderItem>> GetOrderItemsByOrderId(int orderId);

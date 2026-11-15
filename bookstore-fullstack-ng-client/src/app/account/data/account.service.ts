@@ -4,6 +4,7 @@ import { RegistrationModel } from "./registration.model";
 import { HttpClient } from "@angular/common/http";
 import { LoginModel } from "./login.model";
 import { Observable } from "rxjs";
+import { UserProfileModel } from "./user-profile.model";
 
 @Injectable({ providedIn: "root" })
 export class AccountService {
@@ -26,5 +27,9 @@ export class AccountService {
     return this.http.post(this.baseUrl + "/login", data, {
       responseType: "text",
     });
+  }
+
+  getProfile(): Observable<UserProfileModel> {
+    return this.http.get<UserProfileModel>(this.baseUrl + "/profile");
   }
 }

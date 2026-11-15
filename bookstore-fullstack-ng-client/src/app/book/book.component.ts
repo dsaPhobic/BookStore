@@ -29,6 +29,7 @@ import { PageSelectorModel } from "../common/page-selector.model";
 import { BookPaginatorComponent } from "./ui/book-paginator.component";
 import { BookFilterComponent } from "./ui/book-filter.component";
 import { ActivatedRoute, Router } from "@angular/router";
+import { ConfirmationService } from "../common/confirmation.service";
 
 const ADMIN_BOOK_PAGE_SIZES = [5, 10, 25, 50, 100];
 
@@ -113,6 +114,7 @@ export class BookComponent implements OnInit, OnDestroy {
   authorService = inject(AuthorService);
   genreService = inject(GenreService);
   dialog = inject(MatDialog);
+  private readonly confirmation = inject(ConfirmationService);
   destroyed$ = new Subject<boolean>();
   store = inject(Store);
   route = inject(ActivatedRoute);
@@ -176,12 +178,18 @@ export class BookComponent implements OnInit, OnDestroy {
   }
 
   onDelete(book: BookReadModel) {
-    if (
-      window.confirm(`Are you sure you want to delete the book "${book.title}"?`)
-    ) {
-      this.store.dispatch(BookActions.deleteBook({ id: book.id }));
-      this.loadBooks();
-    }
+    this.confirmation
+      .confirm({
+        title: "Delete book?",
+        message: `Are you sure you want to delete the book "${book.title}"?`,
+        confirmText: "Delete book",
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(BookActions.deleteBook({ id: book.id }));
+          this.loadBooks();
+        }
+      });
   }
 
   ngOnInit(): void {

@@ -1,6 +1,9 @@
 ﻿using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.DTOs;
+using BookStoreFullStackNg.Data.DTOs.Order;
+using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using BookStoreFullStackNg.Data.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStoreFullStackNg.Api.Controllers
@@ -10,9 +13,14 @@ namespace BookStoreFullStackNg.Api.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthService _authService;
-        public AccountController(IAuthService authService, ILogger<AccountController> logger)
+        private readonly IUserRepository _userRepository;
+        public AccountController(
+            IAuthService authService,
+            IUserRepository userRepository,
+            ILogger<AccountController> logger)
         {
             _authService = authService;
+            _userRepository = userRepository;
         }
 
 
@@ -30,6 +38,29 @@ namespace BookStoreFullStackNg.Api.Controllers
         {
                 await _authService.Registeration(model, Roles.User);
                 return CreatedAtAction(nameof(Signup), model);
+        }
+
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> Profile()
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _userRepository.GetUserByUserNameAsync(username);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new UserProfileDto
+            {
+                Name = user.Name,
+                Email = user.Username
+            });
         }
     }
 }

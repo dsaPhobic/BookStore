@@ -8,6 +8,7 @@ import { Store } from "@ngrx/store";
 import { CartActions } from "../cart/state/cart.actions";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
+import { DemoNetBankingOrderModel } from "./data/demo-netbanking-order.model";
 
 @Component({
   selector: "app-create-order",
@@ -42,6 +43,7 @@ import { MatButtonModule } from "@angular/material/button";
 
       <app-create-order-form
         [paymentMethods]="(paymentMethods$ | async) ?? []"
+        [shippingRates]="(shippingRates$ | async) ?? []"
         (onOrderSubmit)="handleOrderSubmit($event)"
       />
     </div>
@@ -64,11 +66,20 @@ export class CreateOrderComponent {
   private router = inject(Router);
   private store = inject(Store);
   paymentMethods$ = this.orderService.getPaymentMethods();
+  shippingRates$ = this.orderService.getShippingRates();
 
   handleOrderSubmit(orderToCreate: OrderCreateModel) {
     this.orderService.createOrder(orderToCreate).subscribe({
-      next: () => {
+      next: (demoNetBankingOrder: DemoNetBankingOrderModel | null) => {
         this.store.dispatch(CartActions.emptyCartItemState());
+        if (demoNetBankingOrder) {
+          this.router.navigate(
+            ["/demo-netbanking", demoNetBankingOrder.orderId],
+            { state: { amount: demoNetBankingOrder.amount } }
+          );
+          return;
+        }
+
         this.router.navigate(["/order-success"]);
       },
       error: () => {

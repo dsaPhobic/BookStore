@@ -95,6 +95,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: "demo-netbanking/:orderId",
+    canActivate: [routeGuard],
+    loadComponent: () =>
+      import("./order/demo-netbanking.component").then(
+        (c) => c.DemoNetBankingComponent
+      ),
+  },
+  {
     path: "order-success",
     canActivate: [routeGuard],
     loadComponent: () =>
