@@ -15,4 +15,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u=>u.Username== userName);
     }
+
+    public async Task<User?> GetUserByIdAsync(int userId)
+    {
+        return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+    }
 }
