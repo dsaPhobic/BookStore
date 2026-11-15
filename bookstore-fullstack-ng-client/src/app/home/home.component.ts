@@ -32,52 +32,59 @@ import { BookListPublicComponent } from "../book-public/ui/book-list-public.comp
     <section class="hero">
       <div class="hero-inner">
         <div class="hero-copy">
-          <span class="eyebrow">
-            <mat-icon>auto_awesome</mat-icon> CURATED BOOKSHOP
+          <span class="hero-eyebrow">
+            <mat-icon>auto_awesome</mat-icon> CURATED EDITIONS
           </span>
-          <h1>Discover Books That Shape How You Think & Build</h1>
+          <h1>Books that shape how you think, design, and build.</h1>
           <p class="hero-lead">
-            From software craftsmanship and system design to timeless science and
-            literature—explore our handpicked library with instant checkout.
+            From timeless literature and system design to philosophy and science. 
+            A curated library with swift, seamless ordering.
           </p>
           <div class="hero-actions">
-            <a mat-flat-button color="accent" routerLink="/books">
+            <a mat-flat-button class="primary-hero-cta" routerLink="/books">
               <mat-icon>menu_book</mat-icon>
               Explore Catalog
             </a>
-            <a mat-stroked-button routerLink="/signup" class="secondary-cta">
-              Create Free Account
+            <a mat-stroked-button routerLink="/signup" class="secondary-hero-cta">
+              Create Account
             </a>
           </div>
 
           <div class="hero-stats">
             <div class="stat">
               <strong>100%</strong>
-              <span>Authentic Editions</span>
+              <span>Verified Editions</span>
             </div>
             <div class="stat">
-              <strong>24/7</strong>
-              <span>Instant Ordering</span>
+              <strong>Fast</strong>
+              <span>Nationwide Delivery</span>
             </div>
             <div class="stat">
-              <strong>Free</strong>
-              <span>Member Perks</span>
+              <strong>Direct</strong>
+              <span>Instant Checkout</span>
             </div>
           </div>
         </div>
 
         <div class="hero-visual">
-          <div class="showcase-card primary-card">
-            <div class="card-badge">Bestseller</div>
-            <mat-icon class="card-icon">menu_book</mat-icon>
-            <h3>Modern Engineering & Literature</h3>
-            <p>Handpicked titles from world-renowned authors and thinkers.</p>
-          </div>
-          <div class="showcase-card floating-card">
-            <mat-icon>verified</mat-icon>
-            <div>
-              <strong>Curated Collection</strong>
-              <span>Updated weekly by editors</span>
+          <div class="curated-spotlight">
+            <div class="spotlight-header">
+              <span class="spotlight-badge">Editor's Choice</span>
+              <span class="spotlight-year">Volume 2026</span>
+            </div>
+            <div class="spotlight-book-spine">
+              <div class="spine-mark"><mat-icon>menu_book</mat-icon></div>
+              <div>
+                <h3>Designing Data-Intensive Applications</h3>
+                <p class="spotlight-author">Martin Kleppmann</p>
+              </div>
+            </div>
+            <p class="spotlight-desc">
+              The definitive guide to the architecture, reliability, and scale of modern distributed systems.
+            </p>
+            <div class="spotlight-action">
+              <span class="spotlight-tag">Distributed Systems</span>
+              <a routerLink="/books" class="spotlight-link">View in catalog →</a>
             </div>
           </div>
         </div>
@@ -178,65 +185,91 @@ import { BookListPublicComponent } from "../book-public/ui/book-list-public.comp
   styles: [
     `
       .hero {
-        background: linear-gradient(135deg, #1a234d 0%, #29356a 55%, #3d4d8f 100%);
+        background: #090d16;
         color: #fff;
-        padding: 64px 24px 72px;
+        padding: 72px 24px 80px;
         position: relative;
-        overflow: hidden;
+        border-bottom: 1px solid var(--bs-border);
       }
 
       .hero-inner {
         max-width: var(--bs-container);
         margin: 0 auto;
         display: grid;
-        grid-template-columns: 1.25fr 0.9fr;
-        gap: 48px;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 56px;
         align-items: center;
       }
 
-      .hero-copy .eyebrow {
-        color: #ffb19c;
-        margin-bottom: 12px;
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 16px;
       }
 
-      .hero-copy .eyebrow .mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
+      .hero-eyebrow .mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        color: #38bdf8;
       }
 
       .hero-copy h1 {
+        font-family: var(--bs-font-heading);
         color: #fff;
         font-size: 46px;
         line-height: 1.15;
-        margin: 0 0 18px;
+        margin: 0 0 20px;
+        letter-spacing: -0.02em;
       }
 
       .hero-lead {
         font-size: 17px;
-        line-height: 1.65;
-        color: rgba(255, 255, 255, 0.82);
-        margin: 0 0 28px;
-        max-width: 560px;
+        line-height: 1.6;
+        color: #94a3b8;
+        margin: 0 0 32px;
+        max-width: 540px;
       }
 
       .hero-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 14px;
-        margin-bottom: 36px;
+        margin-bottom: 40px;
       }
 
-      .secondary-cta {
-        border-color: rgba(255, 255, 255, 0.35) !important;
+      .primary-hero-cta {
+        background: #ffffff !important;
+        color: #090d16 !important;
+        font-weight: 600 !important;
+        height: 44px !important;
+        padding: 0 22px !important;
+        border-radius: var(--bs-radius-sm) !important;
+      }
+
+      .secondary-hero-cta {
+        border-color: rgba(255, 255, 255, 0.25) !important;
         color: #fff !important;
+        height: 44px !important;
+        padding: 0 22px !important;
+        border-radius: var(--bs-radius-sm) !important;
+      }
+
+      .secondary-hero-cta:hover {
+        background: rgba(255, 255, 255, 0.08);
       }
 
       .hero-stats {
         display: flex;
-        gap: 32px;
+        gap: 36px;
         padding-top: 24px;
-        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .stat {
@@ -245,83 +278,118 @@ import { BookListPublicComponent } from "../book-public/ui/book-list-public.comp
       }
 
       .stat strong {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: #fff;
+        font-family: var(--bs-font-sans);
       }
 
       .stat span {
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.68);
+        font-size: 12px;
+        color: #64748b;
+        letter-spacing: 0.02em;
       }
 
       .hero-visual {
-        position: relative;
         display: flex;
-        flex-direction: column;
-        gap: 18px;
+        justify-content: center;
       }
 
-      .showcase-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: var(--bs-radius-lg);
+      .curated-spotlight {
+        width: 100%;
+        max-width: 400px;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: var(--bs-radius);
         padding: 28px;
-        color: #fff;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
       }
 
-      .primary-card h3 {
-        color: #fff;
-        font-size: 24px;
-        margin: 12px 0 8px;
-      }
-
-      .primary-card p {
-        margin: 0;
-        color: rgba(255, 255, 255, 0.78);
-      }
-
-      .card-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 999px;
-        background: var(--bs-accent);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .card-icon {
-        display: block;
-        font-size: 42px;
-        width: 42px;
-        height: 42px;
-        margin-top: 14px;
-        color: #ffb19c;
-      }
-
-      .floating-card {
+      .spotlight-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .spotlight-badge {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: #1e293b;
+        color: #38bdf8;
+        padding: 4px 10px;
+        border-radius: 999px;
+      }
+
+      .spotlight-year {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .spotlight-book-spine {
+        display: flex;
         gap: 14px;
-        padding: 18px 22px;
+        align-items: flex-start;
+        margin-bottom: 14px;
       }
 
-      .floating-card .mat-icon {
-        color: #ffb19c;
-        font-size: 28px;
-        width: 28px;
-        height: 28px;
+      .spine-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--bs-radius-sm);
+        background: #1e293b;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
       }
 
-      .floating-card strong {
-        display: block;
-        font-size: 15px;
+      .spotlight-book-spine h3 {
+        color: #fff;
+        font-size: 18px;
+        font-family: var(--bs-font-sans);
+        font-weight: 700;
+        margin: 0 0 4px;
+        line-height: 1.3;
       }
 
-      .floating-card span {
+      .spotlight-author {
+        margin: 0;
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.72);
+        color: #94a3b8;
+      }
+
+      .spotlight-desc {
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: #94a3b8;
+        margin: 0 0 20px;
+      }
+
+      .spotlight-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .spotlight-tag {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .spotlight-link {
+        font-size: 13px;
+        font-weight: 600;
+        color: #38bdf8;
+        text-decoration: none;
+      }
+
+      .spotlight-link:hover {
+        text-decoration: underline;
       }
 
       .section {

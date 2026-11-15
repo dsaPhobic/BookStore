@@ -38,24 +38,23 @@ import { BookFilterComponent } from "./ui/book-filter.component";
     BookFilterComponent,
   ],
   template: `
-    <div class="page-header">
+    <div class="header-container">
       <div>
-        <span class="eyebrow">CATALOG ADMINISTRATION</span>
-        <h1>Manage Books</h1>
-        <p class="page-subtitle">
-          Add new books, upload cover images, and assign authors & genres.
-        </p>
+        <h1 class="page-title">Quản trị Sách & Thư viện (PIM)</h1>
+        <p class="subtitle">Quản lý kho sách, tối ưu ảnh bìa Cloudinary và tra cứu tự động qua ISBN</p>
       </div>
       <button
         type="button"
-        (click)="onAddUpdate('Add', null)"
-        mat-flat-button
-        color="accent"
+        (click)="onAddUpdate('Thêm mới', null)"
+        mat-raised-button
+        color="primary"
       >
-        <mat-icon>add</mat-icon>
-        Add New Book
+        <mat-icon>add</mat-icon> Thêm Sách
       </button>
     </div>
+
+    <mat-spinner *ngIf="loading$ | async"></mat-spinner>
+    <ng-container *ngIf="error$ | async as error"> </ng-container>
 
     <app-book-filter
       (filter)="onFilter($event)"
@@ -63,16 +62,12 @@ import { BookFilterComponent } from "./ui/book-filter.component";
       (publishToEvent)="onPublishTo($event)"
     />
 
-    <div class="loading-center" *ngIf="loading$ | async">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
-
     <ng-container *ngIf="books$ | async as books">
       <app-book-list
         [books]="books"
         (sort)="onSort($event)"
         (delete)="onDelete($event)"
-        (edit)="onAddUpdate('Update', $event)"
+        (edit)="onAddUpdate('Chỉnh sửa', $event)"
       ></app-book-list>
     </ng-container>
 
@@ -83,7 +78,26 @@ import { BookFilterComponent } from "./ui/book-filter.component";
       />
     </ng-container>
   `,
-  styles: [``],
+  styles: [
+    `
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .page-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #64748b;
+        font-size: 13px;
+      }
+    `,
+  ],
 })
 export class BookComponent implements OnInit, OnDestroy {
   authorService = inject(AuthorService);
@@ -126,12 +140,13 @@ export class BookComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(BookDialogComponent, {
       data: {
         book,
-        title: action + " Book",
+        title: action + " Sách",
         genres$: this.genres$,
         authors$: this.authors$,
       },
-      maxWidth: "95vw",
+      width: "820px",
     });
+
     dialogRef.componentInstance.submit
       .pipe(takeUntil(this.destroyed$))
       .subscribe((submittedBook) => {
@@ -148,7 +163,7 @@ export class BookComponent implements OnInit, OnDestroy {
 
   onDelete(book: BookReadModel) {
     if (
-      window.confirm(`Are you sure to delete the record (book: ${book.title})?`)
+      window.confirm(`Bạn có chắc chắn muốn xóa cuốn sách: "${book.title}"?`)
     ) {
       this.store.dispatch(BookActions.deleteBook({ id: book.id }));
       this.loadBooks();
@@ -174,10 +189,12 @@ export class BookComponent implements OnInit, OnDestroy {
     this.store.dispatch(BookActions.setPublishedFrom({ publishedFrom }));
     this.loadBooks();
   }
+
   onPublishTo(publishedTo: number | null) {
     this.store.dispatch(BookActions.setPublishedTo({ publishedTo }));
     this.loadBooks();
   }
+
   onFilter(searchTerm: string | null) {
     this.store.dispatch(BookActions.setSearchTerm({ searchTerm }));
     this.loadBooks();

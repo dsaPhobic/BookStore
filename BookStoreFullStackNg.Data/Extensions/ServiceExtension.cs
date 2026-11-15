@@ -22,6 +22,10 @@ public static class ServiceExtension
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
+
+        // Upgraded services for Member 1
+        services.AddScoped<ICloudinaryService, CloudinaryService>();
+        services.AddHttpClient<IIsbnLookupService, GoogleBooksService>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IWishlistRepository, WishlistRepository>();

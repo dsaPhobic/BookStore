@@ -3,6 +3,7 @@ import {
   Component,
   inject,
   OnDestroy,
+  OnInit,
   ViewChild,
 } from "@angular/core";
 import { LoginFormComponet } from "./ui/login-form.component";
@@ -20,6 +21,7 @@ import {
 } from "./state/account.selectors";
 import { Subject, takeUntil, tap } from "rxjs";
 import accountActions from "./state/account.actions";
+import { tokenUtils } from "../utils/token.utils";
 
 @Component({
   selector: "app-login",
@@ -77,19 +79,23 @@ import accountActions from "./state/account.actions";
       }
 
       .auth-icon {
-        width: 52px;
-        height: 52px;
+        width: 44px;
+        height: 44px;
         margin: 0 auto 14px;
-        border-radius: 14px;
-        background: var(--bs-ink-soft);
-        color: var(--bs-ink);
+        border-radius: var(--bs-radius-sm);
+        background: var(--bs-ink);
+        color: #fff;
         display: grid;
         place-items: center;
       }
 
       .auth-header h1 {
-        font-size: 28px;
+        font-family: var(--bs-font-sans);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--bs-ink);
         margin: 0 0 6px;
+        letter-spacing: -0.02em;
       }
 
       .auth-header p {
@@ -112,7 +118,7 @@ import accountActions from "./state/account.actions";
       }
 
       .demo-box strong {
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
       }
 
       .auth-footer {
@@ -124,14 +130,14 @@ import accountActions from "./state/account.actions";
 
       .auth-footer a {
         font-weight: 600;
-        color: var(--bs-accent);
-        text-decoration: none;
+        color: var(--bs-ink);
+        text-decoration: underline;
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent implements OnInit, OnDestroy {
   store = inject(Store);
   router = inject(Router);
   matSnackBar = inject(MatSnackBar);
@@ -146,35 +152,44 @@ export class LoginComponent implements OnDestroy {
     .select(selectLoginErrorState)
     .pipe(
       tap((d) => {
-        if (d?.message) {
-          this.loginFormComponent.resetLoginForm();
-          this.matSnackBar.open(d?.message, "Dismiss", {
-            duration: 2500,
-          });
+        if (!d) return;
+        let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.";
+        if (d.error) {
+          try {
+            const parsed = typeof d.error === "string" ? JSON.parse(d.error) : d.error;
+            if (parsed?.Message) {
+              errorMessage = parsed.Message;
+            } else if (parsed?.message) {
+              errorMessage = parsed.message;
+            }
+          } catch {
+            if (typeof d.error === "string" && d.error.trim().length > 0) {
+              errorMessage = d.error;
+            }
+          }
+        } else if (d.status === 400 || d.status === 401) {
+          errorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
+        } else if (d.message) {
+          errorMessage = d.message;
         }
+
+        this.matSnackBar.open(errorMessage, "Dismiss", {
+          duration: 3500,
+        });
       }),
       takeUntil(this.destroyed$)
     )
     .subscribe();
 
-  doLogin$ = this.userInfo$.pipe(
-    tap((userInfo) => {
-      if (userInfo) {
-        const { username } = userInfo;
-        if (username) {
-          this.matSnackBar.open("Login successful", "Dismiss", {
-            duration: 2000,
-          });
-          this.router.navigate(["/dashboard"]);
-        }
-      }
-    }),
-    takeUntil(this.destroyed$)
-  );
+  ngOnInit(): void {
+    const savedToken = tokenUtils.getToken();
+    if (savedToken && !tokenUtils.isTokenExpired(savedToken)) {
+      this.router.navigate(["/dashboard"]);
+    }
+  }
 
   onSubmit(data: LoginModel) {
     this.store.dispatch(accountActions.login({ login: data }));
-    this.doLogin$.subscribe();
   }
 
   ngOnDestroy() {

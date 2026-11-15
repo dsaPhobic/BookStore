@@ -69,22 +69,23 @@ public class AuthService : IAuthService
 
     public async Task<string> Login(LoginModel model)
     {
-        var user = await userManager.FindByNameAsync(model.Username);
-        if (user == null)
-            throw new InvalidOperationException("Invalid username");
-        if (!await userManager.CheckPasswordAsync(user, model.Password))
-            throw new InvalidOperationException("Invalid password");
+        var user = await userManager.FindByNameAsync(model.Username) ?? await userManager.FindByEmailAsync(model.Username);
+        if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
+            throw new InvalidOperationException("Invalid username or password");
 
         var userRoles = await userManager.GetRolesAsync(user);
         var authClaims = new List<Claim>
             {
-               new Claim(ClaimTypes.Name, user.UserName),
+               new Claim(ClaimTypes.Name, user.UserName ?? model.Username),
+               new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? model.Username),
+               new Claim(JwtRegisteredClaimNames.Email, user.Email ?? user.UserName ?? model.Username),
                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
         foreach (var userRole in userRoles)
         {
             authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            authClaims.Add(new Claim("role", userRole));
         }
         string token = GenerateToken(authClaims);
         return token;

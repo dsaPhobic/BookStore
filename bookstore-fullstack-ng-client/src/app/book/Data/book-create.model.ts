@@ -1,6 +1,3 @@
-import { Author } from "../../authors/data/author.model";
-import { GenreModel } from "../../genre/data/genre.model";
-
 export interface BookCreateModel {
   id: number;
   title: string;
@@ -11,6 +8,11 @@ export interface BookCreateModel {
   genreIds: number[];
   imageFile?: File | null;
   imageUrl?: string | null;
-  // authors: Author[];
-  // genres: GenreModel[];
+  imagePublicId?: string | null;
+  isbn?: string | null;
+  pageCount?: number | null;
+  language?: string | null;
+  format?: string | null;
+  publisher?: string | null;
+  status?: string | null;
 }

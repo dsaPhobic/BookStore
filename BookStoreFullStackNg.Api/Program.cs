@@ -4,7 +4,6 @@ using BookStoreFullStackNg.Api.Middlewares;
 using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -20,9 +19,6 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "temp-keys")));
-
 // Add services to the container.
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddControllers();
@@ -30,6 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.RegisterDataServices();
+builder.Services.Configure<BookStoreFullStackNg.Data.Services.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddDbContext<BookStoreContext>(options => options.UseSqlite("Data source= BookStore.db"));
 
 builder.Services.AddDbContext<AuthContext>(options => options.UseSqlite("Data source= Auth.db"));
@@ -68,7 +65,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: allowedOrigins,
     policy =>
     {
-        policy.WithOrigins("*").WithHeaders("*").WithMethods("*");
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
     });
 });
 builder.Services.AddTransient<ExceptionMiddleware>();
@@ -94,6 +91,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(allowedOrigins);
+
 app.UseHttpsRedirection();
 
 // mapping Uploads folder to Resources folder 
@@ -104,7 +103,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Resources"
 });
 
-app.UseCors(allowedOrigins);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+           Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    RequestPath = "/Uploads"
+});
 
 app.UseOutputCache();
 
@@ -117,7 +121,6 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllers();
 
 // seeding default auth data
-
 await AuthSeeder.SeedData(app);
 
 

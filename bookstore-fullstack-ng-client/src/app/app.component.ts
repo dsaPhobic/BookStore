@@ -80,6 +80,7 @@ export class AppComponent implements OnInit, OnDestroy {
       )
       .subscribe();
   }
+
   ngOnInit(): void {
     // Restore the session after a page refresh so route guards, the header
     // and the logged-in screens keep working from the stored token.

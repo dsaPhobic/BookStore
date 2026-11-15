@@ -8,11 +8,26 @@ const getToken = () => localStorage.getItem(tokenKey);
 const getUserFromToken = (token: string): User | null => {
   try {
     const decodedToken: any = jwtDecode(token);
-    const { role, unique_name } = decodedToken;
-    const user: User = { roles: role, username: unique_name };
+    if (!decodedToken) return null;
+
+    const username =
+      decodedToken.unique_name ||
+      decodedToken.name ||
+      decodedToken.email ||
+      decodedToken.sub ||
+      decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+      "";
+
+    const role =
+      decodedToken.role ||
+      decodedToken.roles ||
+      decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+      [];
+
+    const user: User = { roles: role, username };
     return user;
   } catch (ex) {
-    console.log(ex);
+    console.error("Failed to decode token:", ex);
     return null;
   }
 };

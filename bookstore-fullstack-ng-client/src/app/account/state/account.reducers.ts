@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { createReducer, on } from "@ngrx/store";
 import accountActions from "./account.actions";
+import { tokenUtils } from "../../utils/token.utils";
 
 export const accountFeatureKey = "Account";
 
@@ -10,8 +11,12 @@ export interface AccountState {
   error: HttpErrorResponse | null;
 }
 
+const savedToken = tokenUtils.getToken();
+const initialToken =
+  savedToken && !tokenUtils.isTokenExpired(savedToken) ? savedToken : null;
+
 export const initialState: AccountState = {
-  token: null,
+  token: initialToken,
   loading: false,
   error: null,
 };
@@ -21,11 +26,13 @@ export const accountReducers = createReducer(
   on(accountActions.login, (state, { login }) => ({
     ...state,
     loading: true,
+    error: null,
   })),
   on(accountActions.loginSuccess, (state, { token }) => ({
     ...state,
     token,
     loading: false,
+    error: null,
   })),
   on(accountActions.loginFailure, (state, { error }) => ({
     ...state,

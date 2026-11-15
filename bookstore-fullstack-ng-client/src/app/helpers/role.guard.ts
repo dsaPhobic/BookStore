@@ -5,49 +5,53 @@ import {
   selectLoginState,
   selectUserInfo,
 } from "../account/state/account.selectors";
-import { of, tap } from "rxjs";
+import { map, take } from "rxjs";
+import { tokenUtils } from "../utils/token.utils";
+import accountActions from "../account/state/account.actions";
 
 export const roleGuard: CanActivateFn = (route, state) => {
   const store = inject(Store);
   const router = inject(Router);
   const { roles } = route.data;
-  const requiredRoles: string[] = roles;
-  const userInfo$ = store.select(selectUserInfo);
-  var isLoggedIn = false;
+  const requiredRoles: string[] = roles || [];
 
-  store
-    .select(selectLoginState)
-    .pipe(
-      tap((val) => {
-        isLoggedIn = val;
-      })
-    )
-    .subscribe();
-
-  if (!isLoggedIn) {
-    router.navigate(["/login"]);
-    return false;
+  // Check persisted token first
+  const savedToken = tokenUtils.getToken();
+  if (savedToken && !tokenUtils.isTokenExpired(savedToken)) {
+    const user = tokenUtils.getUserFromToken(savedToken);
+    if (user) {
+      store.dispatch(accountActions.loadAccountInfo({ accessToken: savedToken }));
+      const userRoles = Array.isArray(user.roles) ? user.roles : [user.roles];
+      const hasRequiredRole = requiredRoles.some((role) =>
+        userRoles.includes(role)
+      );
+      if (!hasRequiredRole) {
+        router.navigate(["/unauthorized"]);
+        return false;
+      }
+      return true;
+    }
   }
 
-  userInfo$
-    .pipe(
-      tap((userInfo) => {
-        if (!userInfo) {
-          router.navigate(["/login"]);
-          return of(false);
-        }
-        const roles = userInfo?.roles;
-        const hasRequiredRole = requiredRoles.some((role) =>
-          roles?.includes(role)
-        );
-        if (!hasRequiredRole) {
-          router.navigate(["/unauthorized"]);
-          return of(false);
-        }
-        return of(true);
-      })
-    )
-    .subscribe();
-
-  return true;
+  // Fallback to reactive store
+  return store.select(selectUserInfo).pipe(
+    take(1),
+    map((userInfo) => {
+      if (!userInfo) {
+        router.navigate(["/login"]);
+        return false;
+      }
+      const userRoles = Array.isArray(userInfo.roles)
+        ? userInfo.roles
+        : [userInfo.roles];
+      const hasRequiredRole = requiredRoles.some((role) =>
+        userRoles.includes(role)
+      );
+      if (!hasRequiredRole) {
+        router.navigate(["/unauthorized"]);
+        return false;
+      }
+      return true;
+    })
+  );
 };
