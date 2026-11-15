@@ -49,4 +49,19 @@ The API exposes a SignalR hub at `/hubs/notifications`. Customers connect with t
 
 The Angular client keeps the connection open while a session is active, shows the update as a toast, adds it to the notification bell in the header, and refreshes the "My Orders" list when that page is open.
 
+### SePay Sandbox checkout
+
+The NetBanking option uses SePay's Sandbox checkout in the Development environment. Configure credentials with .NET user-secrets; do not put merchant keys in `appsettings.json` or commit them:
+
+```powershell
+dotnet user-secrets set "SePay:MerchantId" "<sandbox merchant id>" --project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj
+dotnet user-secrets set "SePay:MerchantSecretKey" "<sandbox merchant secret key>" --project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj
+dotnet user-secrets set "SePay:IpnSecretKey" "<the secret configured for SePay IPN authentication>" --project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj
+dotnet user-secrets set "SePay:UsdToVndRate" "<your VND per USD conversion rate>" --project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj
+dotnet user-secrets set "SePay:ClientBaseUrl" "http://localhost:4200" --project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj
+```
+
+In the SePay merchant portal, configure IPN authentication as `SECRET_KEY` using the same IPN secret, and set the IPN URL to the public HTTPS URL for `/api/orders/sepay-ipn`. SePay cannot call `localhost`; use an HTTPS tunnel or deployed API while testing. The API stores the expected VND amount on the pending payment and only marks it paid after a valid IPN; the browser return URL alone does not confirm payment. Sandbox credentials and the checkout URL are separate from Production.
+
+## Screenshots
 
