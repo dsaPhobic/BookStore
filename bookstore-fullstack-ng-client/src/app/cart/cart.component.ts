@@ -16,6 +16,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { CartItemComponent } from "./ui/cart-item.component";
 import { ClassSummaryComponent } from "./ui/cart-summary.component";
 import { CartUpdateModel } from "./data/cart-update.model";
+import { ConfirmationService } from "../common/confirmation.service";
 
 @Component({
   selector: "app-cart",
@@ -113,6 +114,7 @@ import { CartUpdateModel } from "./data/cart-update.model";
 })
 export class CartComponent {
   private readonly store = inject(Store);
+  private readonly confirmation = inject(ConfirmationService);
   cartItems$: Observable<ReadonlyArray<CartItem>> =
     this.store.select(selectCartItems);
   loading$: Observable<boolean> = this.store.select(selectCartLoading);
@@ -159,15 +161,31 @@ export class CartComponent {
   }
 
   onDeleteItem(id: number) {
-    if (window.confirm("Remove this book from your cart?")) {
-      this.store.dispatch(CartActions.deleteCartItem({ id }));
-    }
+    this.confirmation
+      .confirm({
+        title: "Remove book?",
+        message: "Remove this book from your cart?",
+        confirmText: "Remove",
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(CartActions.deleteCartItem({ id }));
+        }
+      });
   }
 
   onClearCart() {
-    if (window.confirm("Remove all items from your cart?")) {
-      this.store.dispatch(CartActions.clearCart());
-    }
+    this.confirmation
+      .confirm({
+        title: "Clear your cart?",
+        message: "Remove all items from your cart?",
+        confirmText: "Clear cart",
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(CartActions.clearCart());
+        }
+      });
   }
 
   constructor() {

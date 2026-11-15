@@ -18,6 +18,7 @@ import {
 import { HttpErrorResponse } from "@angular/common/http";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { GenreActions } from "./state/genre.actions";
+import { ConfirmationService } from "../common/confirmation.service";
 
 @Component({
   selector: "app-book",
@@ -87,6 +88,7 @@ import { GenreActions } from "./state/genre.actions";
 })
 export class GenreComponent {
   dialog = inject(MatDialog);
+  private readonly confirmation = inject(ConfirmationService);
   destroyed$ = new Subject<boolean>();
   store = inject(Store);
   searchControl = new FormControl<string>("");
@@ -112,9 +114,17 @@ export class GenreComponent {
   }
 
   onDelete(genre: GenreModel) {
-    if (window.confirm(`Are you sure to delete "${genre.genreName}"?`)) {
-      this.store.dispatch(GenreActions.deleteGenre({ id: genre.id }));
-    }
+    this.confirmation
+      .confirm({
+        title: "Delete genre?",
+        message: `Are you sure to delete "${genre.genreName}"?`,
+        confirmText: "Delete genre",
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(GenreActions.deleteGenre({ id: genre.id }));
+        }
+      });
   }
 
   onAddUpdate(action: string, genre: GenreModel | null = null) {
