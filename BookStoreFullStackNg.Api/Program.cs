@@ -88,7 +88,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: allowedOrigins,
     policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 builder.Services.AddTransient<ExceptionMiddleware>();
