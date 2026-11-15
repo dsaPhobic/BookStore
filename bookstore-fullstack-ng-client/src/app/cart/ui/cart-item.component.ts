@@ -8,24 +8,19 @@ import {
 } from "@angular/core";
 import { CartItem } from "../data/cart-read.model";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
-import { tap } from "rxjs";
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { environment } from "../../../environments/environment.development";
 import { getImageUrl } from "../../utils/image.utils";
-import { MatSelectModule } from "@angular/material/select";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
-import { NgFor, NgIf } from "@angular/common";
+import { NgIf } from "@angular/common";
 
 @Component({
   selector: "app-cart-item",
   standalone: true,
   imports: [
-    MatSelectModule,
     ReactiveFormsModule,
     MatIconModule,
     MatButtonModule,
-    NgFor,
     NgIf,
   ],
   template: `
@@ -52,26 +47,24 @@ import { NgFor, NgIf } from "@angular/common";
 
     <div class="purchase-box">
       <div class="qty-box">
-        <span class="qty-label">Qty</span>
-        <mat-select
-          aria-label="Quantity"
+        <label class="qty-label" [for]="'quantity-' + cartItem.id">Qty</label>
+        <input
+          [id]="'quantity-' + cartItem.id"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          [attr.aria-label]="'Quantity for ' + cartItem.book.title"
           [formControl]="quantity"
-          class="quantity-select"
-        >
-          <mat-option
-            *ngFor="let qty of [1, 2, 3, 4, 5]; trackBy: trackByFn"
-            [value]="qty"
-            >{{ qty }}</mat-option
-          >
-        </mat-select>
+          class="quantity-input"
+          (change)="onQuantityCommit()"
+        />
       </div>
       <div class="price-box">
         <span class="unit"
           >\${{ cartItem.book.price.toFixed(2) }} each</span
         >
-        <strong class="line-total">
-          \${{ (cartItem.book.price * cartItem.quantity).toFixed(2) }}
-        </strong>
+        <strong class="line-total">\${{ lineTotal }}</strong>
       </div>
     </div>
 
@@ -154,10 +147,20 @@ import { NgFor, NgIf } from "@angular/common";
         line-height: 1.2;
       }
 
-      .quantity-select {
-        width: 52px;
+      .quantity-input {
+        width: 72px;
+        height: 32px;
+        padding: 2px 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
         color: var(--bs-text);
         font-size: 16px;
+      }
+
+      .quantity-input:focus-visible {
+        outline: 2px solid var(--bs-ink);
+        outline-offset: 2px;
       }
 
       .price-box {
@@ -229,28 +232,39 @@ export class CartItemComponent implements OnInit {
     newQuantity: number;
   }>();
 
-  quantity = new FormControl<number>(1);
+  quantity = new FormControl<number | null>(1);
 
-  trackByFn(index: number, qty: number) {
-    return qty;
+  get lineTotal(): string {
+    const enteredQuantity = this.quantity.value;
+    const quantity =
+      enteredQuantity !== null &&
+      Number.isSafeInteger(enteredQuantity) &&
+      enteredQuantity > 0
+        ? enteredQuantity
+        : this.cartItem.quantity;
+    return (this.cartItem.book.price * quantity).toFixed(2);
   }
 
-  constructor() {
-    this.quantity.valueChanges
-      .pipe(
-        tap((qty) => {
-          if (qty)
-            this.selectQuantity.emit({
-              cartItem: this.cartItem,
-              newQuantity: qty,
-            });
-        }),
-        takeUntilDestroyed()
-      )
-      .subscribe();
+  onQuantityCommit(): void {
+    const newQuantity = this.quantity.value;
+    if (
+      newQuantity === null ||
+      !Number.isSafeInteger(newQuantity) ||
+      newQuantity < 1
+    ) {
+      this.quantity.setValue(this.cartItem.quantity, { emitEvent: false });
+      return;
+    }
+
+    if (newQuantity !== this.cartItem.quantity) {
+      this.selectQuantity.emit({
+        cartItem: this.cartItem,
+        newQuantity,
+      });
+    }
   }
 
   ngOnInit(): void {
-    this.quantity.setValue(this.cartItem.quantity);
+    this.quantity.setValue(this.cartItem.quantity, { emitEvent: false });
   }
 }
