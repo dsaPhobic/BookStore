@@ -322,6 +322,31 @@ namespace BookStoreFullStackNg.Data.Migrations
                     b.ToTable("User", (string)null);
                 });
 
+            modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.WishlistItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("UserId", "BookId")
+                        .IsUnique();
+
+                    b.ToTable("WishlistItem", (string)null);
+                });
+
             modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.BookAuthor", b =>
                 {
                     b.HasOne("BookStoreFullStackNg.Data.Domain.Author", "Author")
@@ -429,6 +454,25 @@ namespace BookStoreFullStackNg.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.WishlistItem", b =>
+                {
+                    b.HasOne("BookStoreFullStackNg.Data.Domain.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStoreFullStackNg.Data.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.Author", b =>
