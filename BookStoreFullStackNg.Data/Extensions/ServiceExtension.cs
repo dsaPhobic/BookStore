@@ -26,5 +26,7 @@ public static class ServiceExtension
         // Upgraded services for Member 1
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddHttpClient<IIsbnLookupService, GoogleBooksService>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
     }
 }

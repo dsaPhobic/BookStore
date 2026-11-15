@@ -3,4 +3,5 @@ export interface OrderCreateModel {
   email: string;
   mobileNumber: string;
   paymentMethod: number;
+  couponCode?: string;
 }

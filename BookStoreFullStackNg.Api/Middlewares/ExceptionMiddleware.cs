@@ -2,6 +2,7 @@
 
 using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Api.Models;
+using BookStoreFullStackNg.Data.Exceptions;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace BookStoreFullStackNg.Api.Middlewares;
@@ -38,6 +39,7 @@ public class ExceptionMiddleware : IMiddleware
                 statusCode = StatusCodes.Status404NotFound;
                 break;
             case BadRequestException _:
+            case CouponValidationException _:
                 statusCode = StatusCodes.Status400BadRequest;
                 break;
             default:

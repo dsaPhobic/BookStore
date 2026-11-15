@@ -8,7 +8,6 @@ using BookStoreFullStackNg.Data.DTOs;
 using BookStoreFullStackNg.Data.DTOs.Author;
 using BookStoreFullStackNg.Data.DTOs.Book;
 using BookStoreFullStackNg.Data.DTOs.Common;
-using BookStoreFullStackNg.Data.Helpers;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,12 +16,10 @@ namespace BookStoreFullStackNg.Data.Reopositories.Implementations;
 public class BookRepository : IBookRepository
 {
     private readonly BookStoreContext _context;
-    private readonly ISortHelper<Book> _sortHelper;
 
-    public BookRepository(BookStoreContext context, ISortHelper<Book> sortHelper)
+    public BookRepository(BookStoreContext context)
     {
         _context = context;
-        _sortHelper = sortHelper;
     }
 
     public async Task<BookReadDto> AddBookAsync(BookCreateDto bookToCreate)
@@ -188,6 +185,51 @@ public class BookRepository : IBookRepository
         return book;
     }
 
+    public async Task<IReadOnlyList<BookReadDto>> GetRelatedBooksAsync(int bookId, int limit)
+    {
+        var genreIds = await _context.BookGenres
+            .AsNoTracking()
+            .Where(bookGenre => bookGenre.BookId == bookId)
+            .Select(bookGenre => bookGenre.GenreId)
+            .ToListAsync();
+
+        if (genreIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await _context.Books
+            .AsNoTracking()
+            .Where(book => book.Id != bookId
+                && book.BookGenres.Any(bookGenre => genreIds.Contains(bookGenre.GenreId)))
+            .OrderByDescending(book => book.BookGenres.Count(
+                bookGenre => genreIds.Contains(bookGenre.GenreId)))
+            .ThenByDescending(book => book.PublishedYear)
+            .ThenBy(book => book.Title)
+            .ThenBy(book => book.Id)
+            .Take(limit)
+            .Select(book => new BookReadDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Description = book.Description,
+                PublishedYear = book.PublishedYear,
+                ImageUrl = book.ImageUrl,
+                Price = book.Price,
+                Authors = book.BookAuthors
+                    .Select(bookAuthor => new AuthorReadDTO(
+                        bookAuthor.Author.Id,
+                        bookAuthor.Author.AuthorName))
+                    .ToList(),
+                Genres = book.BookGenres
+                    .Select(bookGenre => new GenreReadDto(
+                        bookGenre.Genre.Id,
+                        bookGenre.Genre.GenreName))
+                    .ToList()
+            })
+            .ToListAsync();
+    }
+
     public async Task<PagedList<Book>> GetBooksAsync(BookQueryParameter queryParameters)
     {
         var booksQuery = _context.Books
@@ -195,22 +237,42 @@ public class BookRepository : IBookRepository
                 .ThenInclude(x => x.Author)
                 .Include(x => x.BookGenres)
                 .ThenInclude(x => x.Genre)
+                .AsNoTracking()
                 .AsQueryable();
 
-        // filter by search term (Title or ISBN)
-        if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
+        // filter by search term
+        if (!string.IsNullOrWhiteSpace(queryParameters.SearchTerm))
         {
-            var term = queryParameters.SearchTerm.ToLower();
-            booksQuery = booksQuery.Where(a =>
-                a.Title.ToLower().Contains(term) ||
-                (a.ISBN != null && a.ISBN.ToLower().Contains(term))
-            );
+            var searchTerm = queryParameters.SearchTerm.Trim().ToLower();
+            booksQuery = booksQuery.Where(book =>
+                book.Title.ToLower().Contains(searchTerm)
+                || book.BookAuthors.Any(bookAuthor =>
+                    bookAuthor.Author.AuthorName.ToLower().Contains(searchTerm)));
         }
 
         // filter by publish year
-        if (queryParameters.PublishedFrom != null && queryParameters.PublishedTo != null)
+        if (queryParameters.PublishedFrom.HasValue)
         {
-            booksQuery = booksQuery.Where(a => a.PublishedYear >= queryParameters.PublishedFrom && a.PublishedYear <= queryParameters.PublishedTo);
+            booksQuery = booksQuery.Where(book =>
+                book.PublishedYear >= queryParameters.PublishedFrom.Value);
+        }
+
+        if (queryParameters.PublishedTo.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.PublishedYear <= queryParameters.PublishedTo.Value);
+        }
+
+        if (queryParameters.MinPrice.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.Price >= queryParameters.MinPrice.Value);
+        }
+
+        if (queryParameters.MaxPrice.HasValue)
+        {
+            booksQuery = booksQuery.Where(book =>
+                book.Price <= queryParameters.MaxPrice.Value);
         }
 
         // filter by genreIds
@@ -219,17 +281,42 @@ public class BookRepository : IBookRepository
             booksQuery = booksQuery.Where(b => b.BookGenres.Any(bg => queryParameters.GenreIds.Contains(bg.GenreId)));
         }
 
-        if (!string.IsNullOrEmpty(queryParameters.SortBy))
-        {
-            booksQuery = _sortHelper.ApplySort(booksQuery, queryParameters.SortBy);
-        }
-        else
-        {
-            booksQuery = booksQuery.OrderByDescending(b => b.Id);
-        }
+        booksQuery = ApplySort(booksQuery, queryParameters.SortBy);
 
         return await PagedList<Book>.ToPagedListAsync(booksQuery, queryParameters.PageNumber, queryParameters.PageSize);
     }
+
+    private static IQueryable<Book> ApplySort(IQueryable<Book> books, string? sortBy)
+    {
+        var normalizedSort = sortBy?.Trim().ToLowerInvariant();
+
+        return normalizedSort switch
+        {
+            "title desc" => books
+                .OrderByDescending(book => book.Title)
+                .ThenBy(book => book.Id),
+            "price" or "price asc" => books
+                .OrderBy(book => book.Price)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "price desc" => books
+                .OrderByDescending(book => book.Price)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "publishedyear" or "publishedyear asc" => books
+                .OrderBy(book => book.PublishedYear)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            "publishedyear desc" => books
+                .OrderByDescending(book => book.PublishedYear)
+                .ThenBy(book => book.Title)
+                .ThenBy(book => book.Id),
+            _ => books
+                .OrderBy(book => book.Title)
+                .ThenBy(book => book.Id)
+        };
+    }
+
 
     public async Task DeleteBookAsync(Book book)
     {

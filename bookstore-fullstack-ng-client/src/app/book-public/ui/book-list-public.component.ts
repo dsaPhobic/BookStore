@@ -10,7 +10,7 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { RouterModule } from "@angular/router";
 import { MatCardModule } from "@angular/material/card";
-import { environment } from "../../../environments/environment.development";
+import { environment } from "../../../environments/environment";
 import { BookReadModel } from "../../book/Data/book-read.model";
 
 @Component({

@@ -7,9 +7,9 @@ import {
   selectUserOrders,
   selectUserOrderTotalCount,
 } from "./state/user-order/user-order.selectors";
-import { map, Observable } from "rxjs";
+import { Observable } from "rxjs";
+import { HttpErrorResponse } from "@angular/common/http";
 import { UserOrderModel } from "./data/user-order.model";
-import { MyOrderModel } from "./data/my-order.model";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { UserOrderListComponent } from "./ui/user-order-list.component";
 import { PageSelectorModel } from "../common/page-selector.model";
@@ -17,6 +17,7 @@ import { UserOrderPaginatorComponent } from "./ui/user-order-paginator.component
 import { UserOrderFilter } from "./ui/user-order-filter.component";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterModule } from "@angular/router";
 
 @Component({
@@ -30,6 +31,7 @@ import { RouterModule } from "@angular/router";
     UserOrderFilter,
     MatIconModule,
     MatButtonModule,
+    MatProgressSpinnerModule,
     RouterModule,
   ],
   template: `
@@ -59,7 +61,15 @@ import { RouterModule } from "@angular/router";
         (clearFilter)="handleClearFilter()"
       />
 
-      <ng-container *ngIf="myOrders$ | async as orders">
+      <div *ngIf="loading$ | async" class="loading-box">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <p *ngIf="error$ | async as error" class="error-box">
+        {{ errorMessage(error) }}
+      </p>
+
+      <ng-container *ngIf="userOrders$ | async as orders">
         <div *ngIf="orders.length === 0" class="bs-empty-state">
           <div class="bs-empty-state__icon">
             <mat-icon>shopping_bag</mat-icon>
@@ -85,7 +95,22 @@ import { RouterModule } from "@angular/router";
       </ng-container>
     </div>
   `,
-  styles: [``],
+  styles: [
+    `
+      .loading-box {
+        display: flex;
+        justify-content: center;
+        padding: 40px 0;
+      }
+
+      .error-box {
+        padding: 16px;
+        border-radius: var(--bs-radius-sm);
+        background: #fdecec;
+        color: #b3261e;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserOrderComponent {
@@ -97,27 +122,15 @@ export class UserOrderComponent {
   userOrders$: Observable<readonly UserOrderModel[]> =
     this.store.select(selectUserOrders);
 
-  myOrders$: Observable<MyOrderModel[]> = this.userOrders$.pipe(
-    map((orders: readonly UserOrderModel[]) =>
-      orders.flatMap((order) =>
-        order.orderItems.map((item) => {
-          var myOrderItem: MyOrderModel = {
-            orderDate: order.orderDate,
-            title: item.book.title,
-            imageUrl: item.book.imageUrl ?? "",
-            price: item.price,
-            authorNames: item.book.authorNames,
-            genreNames: item.book.genreNames,
-            quantity: item.quantity,
-          };
-          return myOrderItem;
-        })
-      )
-    )
-  );
-
   loadUserOrders() {
     this.store.dispatch(userOrderActions.getUserOrder());
+  }
+
+  errorMessage(error: HttpErrorResponse | null) {
+    return (
+      error?.error?.message ??
+      "Unable to load your orders. Please try again."
+    );
   }
 
   onPageSelect(page: PageSelectorModel) {
@@ -132,6 +145,7 @@ export class UserOrderComponent {
     this.store.dispatch(userOrderActions.setSearchTerm({ searchTerm: null }));
     this.loadUserOrders();
   }
+
   handleFilterByPurchaseDate(range: {
     dateFrom: string | null;
     dateTo: string | null;

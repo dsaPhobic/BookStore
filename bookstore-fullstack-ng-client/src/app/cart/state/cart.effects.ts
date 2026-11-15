@@ -65,4 +65,16 @@ export class CartEffects {
       )
     )
   );
+
+  clearCart = createEffect(() =>
+    this.actions$.pipe(
+      ofType(CartActions.clearCart),
+      switchMap(() =>
+        this.cartService.clearCart().pipe(
+          map(() => CartActions.clearCartSuccess()),
+          catchError((error) => of(CartActions.clearCartFailure({ error })))
+        )
+      )
+    )
+  );
 }

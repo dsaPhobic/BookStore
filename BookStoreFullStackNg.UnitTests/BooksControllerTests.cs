@@ -60,6 +60,28 @@ public class BooksControllerTests
         Assert.Equal(mockPagedBooks.PageSize, pagedList.PageSize);
     }
 
+    [Theory]
+    [InlineData(2025, 2020, null, null)]
+    [InlineData(null, null, 500d, 100d)]
+    [InlineData(null, null, -1d, null)]
+    public async Task GetBooks_ThrowsBadRequest_ForInvalidFilterRanges(
+        int? publishedFrom,
+        int? publishedTo,
+        double? minPrice,
+        double? maxPrice)
+    {
+        var query = new BookQueryParameter
+        {
+            PublishedFrom = publishedFrom,
+            PublishedTo = publishedTo,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice
+        };
+
+        await Assert.ThrowsAsync<BadRequestException>(() =>
+            _controller.GetBooks(query));
+    }
+
     [Fact]
     public async Task CreateBook_Returns_CreatedAtRoute_With_BookReadDto()
     {
@@ -248,6 +270,39 @@ public class BooksControllerTests
     {
         // arrange,act,assert
         await Assert.ThrowsAsync<NotFoundException>(() => _controller.GetBookById(9999));
+    }
+
+    [Fact]
+    public async Task GetRelatedBooks_ReturnsRelatedBooks_ForExistingBook()
+    {
+        var currentBook = new BookReadDto { Id = 1, Title = "Current" };
+        IReadOnlyList<BookReadDto> relatedBooks =
+        [
+            new BookReadDto { Id = 2, Title = "Related" }
+        ];
+        _bookRepository.GetBookByIdAsync(1).Returns(currentBook);
+        _bookRepository.GetRelatedBooksAsync(1, 4).Returns(relatedBooks);
+
+        var result = await _controller.GetRelatedBooks(1);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(relatedBooks, okResult.Value);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(13)]
+    public async Task GetRelatedBooks_ThrowsBadRequest_ForInvalidLimit(int limit)
+    {
+        await Assert.ThrowsAsync<BadRequestException>(() =>
+            _controller.GetRelatedBooks(1, limit));
+    }
+
+    [Fact]
+    public async Task GetRelatedBooks_ThrowsNotFound_WhenBookDoesNotExist()
+    {
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _controller.GetRelatedBooks(999));
     }
 
 }

@@ -11,6 +11,7 @@ import {
   selectUserInfo,
 } from "./account/state/account.selectors";
 import accountActions from "./account/state/account.actions";
+import { tokenUtils } from "./utils/token.utils";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { CartActions } from "./cart/state/cart.actions";
 import { selectCartCount } from "./cart/state/cart.selectors";
@@ -82,10 +83,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const savedToken = tokenUtils.getToken();
-    if (savedToken && !tokenUtils.isTokenExpired(savedToken)) {
-      this.store.dispatch(accountActions.loadAccountInfo({ accessToken: savedToken }));
+    // Restore the session after a page refresh so route guards, the header
+    // and the logged-in screens keep working from the stored token.
+    const accessToken = tokenUtils.getToken();
+    if (accessToken && !tokenUtils.isTokenExpired(accessToken)) {
+      this.store.dispatch(accountActions.loadAccountInfo({ accessToken }));
     }
+
     this.loadCartItems();
   }
 

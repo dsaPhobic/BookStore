@@ -9,6 +9,7 @@ namespace BookStoreFullStackNg.Data.Reopositories.Interfaces
         Task<BookReadDto> AddBookAsync(BookCreateDto bookToCreate);
         Task DeleteBookAsync(Book book);
         Task<BookReadDto?> GetBookByIdAsync(int bookId);
+        Task<IReadOnlyList<BookReadDto>> GetRelatedBooksAsync(int bookId, int limit);
         Task<PagedList<Book>> GetBooksAsync(BookQueryParameter queryParameters);
         Task UpdateBookAsync(BookUpdateDto bookToUpdate);
     }

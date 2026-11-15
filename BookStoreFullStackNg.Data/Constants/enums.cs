@@ -22,8 +22,8 @@ public enum PaymentStatus
 public enum OrderStatus
 {
     Pending=1,
-    Confirmed,
+    Processing,
     Shipped,
     Delivered,
-    Canceled
+    Cancelled
 }

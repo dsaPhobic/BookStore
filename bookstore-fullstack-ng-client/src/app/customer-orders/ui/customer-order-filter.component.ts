@@ -31,8 +31,12 @@ import { MatIconModule } from "@angular/material/icon";
     <div class="bs-filter-bar">
       <mat-form-field appearance="outline" class="filter-field">
         <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Search customer, email, book title...</mat-label>
-        <input matInput [formControl]="search" />
+        <mat-label>Search customer name, email, phone or book</mat-label>
+        <input
+          matInput
+          [formControl]="search"
+          placeholder="e.g. Quang, 0912..., Clean Code..."
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="filter-field">

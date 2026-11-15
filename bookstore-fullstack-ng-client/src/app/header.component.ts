@@ -86,6 +86,18 @@ import { User } from "./account/data/user.model";
           </div>
         </ng-template>
 
+        <!-- Repository link -->
+        <a
+          mat-icon-button
+          class="icon-action github-link"
+          href="https://github.com/dsaPhobic/BookStore.git"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="BookStore repository on GitHub"
+        >
+          <mat-icon>code</mat-icon>
+        </a>
+
         <!-- Mobile menu trigger -->
         <button
           mat-icon-button
@@ -108,6 +120,9 @@ import { User } from "./account/data/user.model";
       </a>
       <a mat-menu-item routerLink="/genres">
         <mat-icon>category</mat-icon><span>Genres</span>
+      </a>
+      <a mat-menu-item routerLink="/coupons">
+        <mat-icon>local_offer</mat-icon><span>Coupons</span>
       </a>
       <mat-divider></mat-divider>
       <a mat-menu-item routerLink="/customer-order">
@@ -167,6 +182,9 @@ import { User } from "./account/data/user.model";
           </a>
           <a mat-menu-item routerLink="/genres">
             <mat-icon>category</mat-icon><span>Manage Genres</span>
+          </a>
+          <a mat-menu-item routerLink="/coupons">
+            <mat-icon>local_offer</mat-icon><span>Manage Coupons</span>
           </a>
           <a mat-menu-item routerLink="/customer-order">
             <mat-icon>receipt_long</mat-icon><span>Customer Orders</span>
@@ -295,6 +313,15 @@ import { User } from "./account/data/user.model";
       }
 
       .icon-action {
+        color: var(--bs-ink-dark);
+      }
+
+      .github-link {
+        color: var(--bs-muted);
+        transition: color 0.15s ease;
+      }
+
+      .github-link:hover {
         color: var(--bs-ink-dark);
       }
 

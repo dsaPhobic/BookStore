@@ -8,5 +8,6 @@ public class OrderItemDto
     public int OrderId { get; set; }
     public int Quantity { get; set; }
     public double Price { get; set; }
+    public double PaidTotal { get; set; }
     public BookReadDto Book { get; set; } = null!;
 }

@@ -528,5 +528,8 @@ temp-keys/
 *.db-wal
 Logs/
 
+# Local implementation plan (do not commit/push)
+/MEMBER2_IMPLEMENTATION_PLAN.md
+
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Angular

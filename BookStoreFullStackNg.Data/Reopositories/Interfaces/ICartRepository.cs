@@ -1,4 +1,4 @@
-﻿using BookStoreFullStackNg.Data.Domain;
+using BookStoreFullStackNg.Data.Domain;
 
 namespace BookStoreFullStackNg.Data.Reopositories.Interfaces;
 
@@ -10,5 +10,6 @@ public interface ICartRepository
     Task<CartItem?> GetCartItemByCartItemIdAsync(int cartItemId);
     Task<CartItem> UpdateCartItemAsync(int userId,CartItem cartItem);
     Task RemoveCartItemAsync(int userId,int cartItemId);
+    Task ClearCartAsync(int userId);
     Task<IEnumerable<Cart>> GetCartsAsync();
 }

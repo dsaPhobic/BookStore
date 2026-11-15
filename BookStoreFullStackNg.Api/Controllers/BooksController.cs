@@ -114,10 +114,12 @@ public class BooksController : ControllerBase
     }
 
     [AllowAnonymous]
-    [OutputCache(VaryByQueryKeys = new[] { "PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "GenreIds" })]
+    [OutputCache(VaryByQueryKeys = new[] { "PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "MinPrice", "MaxPrice", "GenreIds" })]
     [HttpGet]
     public async Task<IActionResult> GetBooks([FromQuery] BookQueryParameter queryParameter)
     {
+        ValidateBookQuery(queryParameter);
+
         var pagedBooks = await _bookRepo.GetBooksAsync(queryParameter);
         var books = pagedBooks.Items.Select(b =>
             new BookReadDto
@@ -150,6 +152,33 @@ public class BooksController : ControllerBase
         return Ok(newBookPagedList);
     }
 
+    private static void ValidateBookQuery(BookQueryParameter queryParameter)
+    {
+        if (queryParameter.PageSize <= 0)
+        {
+            throw new BadRequestException("Page size must be greater than zero");
+        }
+
+        if (queryParameter.PublishedFrom.HasValue
+            && queryParameter.PublishedTo.HasValue
+            && queryParameter.PublishedFrom > queryParameter.PublishedTo)
+        {
+            throw new BadRequestException("Published from year cannot be greater than published to year");
+        }
+
+        if (queryParameter.MinPrice < 0 || queryParameter.MaxPrice < 0)
+        {
+            throw new BadRequestException("Price filters cannot be negative");
+        }
+
+        if (queryParameter.MinPrice.HasValue
+            && queryParameter.MaxPrice.HasValue
+            && queryParameter.MinPrice > queryParameter.MaxPrice)
+        {
+            throw new BadRequestException("Minimum price cannot be greater than maximum price");
+        }
+    }
+
     [HttpGet("{id}", Name = nameof(GetBookById))]
     [AllowAnonymous]
     public async Task<IActionResult> GetBookById(int id)
@@ -160,6 +189,26 @@ public class BooksController : ControllerBase
             throw new NotFoundException($"Book with id:{id} does not found");
         }
         return Ok(book);
+    }
+
+    [HttpGet("{id}/related")]
+    [AllowAnonymous]
+    [OutputCache(VaryByQueryKeys = ["limit"])]
+    public async Task<IActionResult> GetRelatedBooks(int id, [FromQuery] int limit = 4)
+    {
+        if (limit is < 1 or > 12)
+        {
+            throw new BadRequestException("Related books limit must be between 1 and 12");
+        }
+
+        BookReadDto? currentBook = await _bookRepo.GetBookByIdAsync(id);
+        if (currentBook == null)
+        {
+            throw new NotFoundException($"Book with id:{id} does not found");
+        }
+
+        var relatedBooks = await _bookRepo.GetRelatedBooksAsync(id, limit);
+        return Ok(relatedBooks);
     }
 
     [HttpDelete("{id}")]

@@ -6,6 +6,7 @@ import { environment } from "../../../environments/environment.development";
 import { OrderCreateModel } from "./order-create.model";
 import { OrderItem, UserOrderModel } from "./user-order.model";
 import { PagedList } from "../../common/paged-list.model";
+import { CouponApplyResultModel } from "./coupon-apply-result.model";
 
 @Injectable({ providedIn: "root" })
 export class OrderService {
@@ -17,6 +18,12 @@ export class OrderService {
 
   createOrder = (data: OrderCreateModel) =>
     this.http.post<any>(this.baseUrl, data);
+
+  applyCoupon = (code: string): Observable<CouponApplyResultModel> =>
+    this.http.post<CouponApplyResultModel>(
+      environment.baseUrl + "/api/coupons/apply",
+      { code }
+    );
 
   getUserOrders({
     pageSize = 10,
@@ -36,7 +43,7 @@ export class OrderService {
       params = params.set("endDate", endDate);
     }
     return this.http.get<PagedList<UserOrderModel>>(
-      this.baseUrl + "/user-orders",
+      this.baseUrl + "/my-orders",
       { params }
     );
   }
@@ -58,12 +65,25 @@ export class OrderService {
       params = params.set("startDate", startDate);
       params = params.set("endDate", endDate);
     }
-    return this.http.get<PagedList<UserOrderModel>>(this.baseUrl, { params });
+    return this.http.get<PagedList<UserOrderModel>>(
+      this.baseUrl + "/customer-orders",
+      { params }
+    );
   }
 
   getOrderItemsByOrderId(orderId: number): Observable<Array<OrderItem>> {
     return this.http.get<Array<OrderItem>>(
       this.baseUrl + "/orderitems/" + orderId
     );
+  }
+
+  getOrder(orderId: number): Observable<UserOrderModel> {
+    return this.http.get<UserOrderModel>(`${this.baseUrl}/${orderId}`);
+  }
+
+  updateOrderStatus(orderId: number, orderStatus: number): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${orderId}/status`, {
+      orderStatus,
+    });
   }
 }

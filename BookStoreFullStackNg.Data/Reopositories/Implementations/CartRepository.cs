@@ -1,4 +1,4 @@
-﻿using BookStoreFullStackNg.Data.Data;
+using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Domain;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -29,8 +29,8 @@ public class CartRepository : ICartRepository
                 await _context.SaveChangesAsync();
             }
 
-            // if item is already in cart,then increment else add
-            var existingItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.BookId == cartItem.BookId);
+            // if item is already in cart (scoped to this user's cart), then increment else add
+            var existingItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.BookId == cartItem.BookId && ci.CartId == cart.Id);
             if (existingItem == null)
             {
                  cartItem.CartId = cart.Id;
@@ -138,5 +138,20 @@ public class CartRepository : ICartRepository
                              .Include(c => c.User)
                              .AsNoTracking()
                              .ToListAsync();
+    }
+
+    public async Task ClearCartAsync(int userId)
+    {
+        var cart = await _context.Carts
+            .Include(c => c.CartItems)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null)
+        {
+            throw new InvalidOperationException("This user does not have a cart to clear.");
+        }
+
+        _context.CartItems.RemoveRange(cart.CartItems);
+        await _context.SaveChangesAsync();
     }
 }

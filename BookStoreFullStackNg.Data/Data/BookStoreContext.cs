@@ -24,6 +24,12 @@ public class BookStoreContext : DbContext
         modelBuilder.Entity<OrderItem>().ToTable("OrderItem");
         modelBuilder.Entity<Payment>().ToTable("Payment");
         modelBuilder.Entity<User>().ToTable("User");
+        modelBuilder.Entity<Coupon>().ToTable("Coupon");
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.Property(coupon => coupon.Code).HasMaxLength(50);
+            entity.HasIndex(coupon => coupon.Code).IsUnique();
+        });
     }
 
     public DbSet<Author> Authors { get; set; }
@@ -37,5 +43,6 @@ public class BookStoreContext : DbContext
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<Payment> Payments { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Coupon> Coupons { get; set; }
 
 }
