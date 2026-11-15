@@ -14,6 +14,7 @@ import { RouterModule } from "@angular/router";
 import { NgIf } from "@angular/common";
 import { MatBadgeModule } from "@angular/material/badge";
 import { User } from "./account/data/user.model";
+import { NotificationCenterComponent } from "./notifications/notification-center.component";
 
 @Component({
   selector: "app-header",
@@ -27,6 +28,7 @@ import { User } from "./account/data/user.model";
     MatMenuModule,
     MatDividerModule,
     NgIf,
+    NotificationCenterComponent,
   ],
   template: `
     <header class="site-header">
@@ -72,6 +74,8 @@ import { User } from "./account/data/user.model";
               >shopping_bag</mat-icon
             >
           </a>
+
+          <app-notification-center />
 
           <button class="user-chip" [matMenuTriggerFor]="userMenu">
             <span class="avatar">{{ initial }}</span>

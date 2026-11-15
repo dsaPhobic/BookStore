@@ -15,6 +15,7 @@ import { tokenUtils } from "./utils/token.utils";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { CartActions } from "./cart/state/cart.actions";
 import { selectCartCount } from "./cart/state/cart.selectors";
+import { NotificationService } from "./notifications/notification.service";
 
 @Component({
   selector: "app-root",
@@ -52,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
   snackBar = inject(MatSnackBar);
   destroyed$ = new Subject<boolean>();
   router = inject(Router);
+  notificationService = inject(NotificationService);
 
   token$ = this.store.select(selectTokenState);
   isLoggedIn$ = this.store.select(selectLoginState);
@@ -61,6 +63,7 @@ export class AppComponent implements OnInit, OnDestroy {
   logout() {
     this.store.dispatch(accountActions.logout());
     this.store.dispatch(CartActions.emptyCartItemState());
+    void this.notificationService.disconnect();
 
     this.snackBar.open("Successfully logged out", "Dismiss", {
       duration: 2000,
@@ -81,6 +84,41 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe();
   }
 
+  /** Opens the SignalR connection while a valid session exists. */
+  syncNotificationConnection() {
+    this.isLoggedIn$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((isLoggedIn) => {
+        if (!isLoggedIn) {
+          void this.notificationService.disconnect();
+          return;
+        }
+
+        const accessToken = tokenUtils.getToken();
+        if (accessToken && !tokenUtils.isTokenExpired(accessToken)) {
+          void this.notificationService.connect(accessToken);
+        }
+      });
+  }
+
+  /** Surfaces order status updates as a toast wherever the customer is. */
+  listenForOrderUpdates() {
+    this.notificationService.orderStatusChanged$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((notification) => {
+        const snackBarRef = this.snackBar.open(
+          notification.message,
+          "View orders",
+          { duration: 7000 }
+        );
+
+        snackBarRef.onAction().subscribe(() => {
+          this.notificationService.markRead(notification.id);
+          this.router.navigate(["/my-orders"]);
+        });
+      });
+  }
+
   ngOnInit(): void {
     // Restore the session after a page refresh so route guards, the header
     // and the logged-in screens keep working from the stored token.
@@ -90,6 +128,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     this.loadCartItems();
+    this.listenForOrderUpdates();
+    this.syncNotificationConnection();
   }
 
   ngOnDestroy(): void {
