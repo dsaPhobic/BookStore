@@ -31,7 +31,23 @@ public class WishlistRepository : IWishlistRepository
             CreatedAt = DateTime.UtcNow
         };
         _context.WishlistItems.Add(item);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _context.Entry(item).State = EntityState.Detached;
+            var concurrentlyCreatedItem = await WishlistQuery()
+                .FirstOrDefaultAsync(wishlistItem =>
+                    wishlistItem.UserId == userId && wishlistItem.BookId == bookId);
+            if (concurrentlyCreatedItem != null)
+            {
+                return concurrentlyCreatedItem;
+            }
+
+            throw;
+        }
 
         return await WishlistQuery().SingleAsync(wishlistItem => wishlistItem.Id == item.Id);
     }
