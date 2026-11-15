@@ -15,14 +15,19 @@ public class MappingProfile : Profile
         CreateMap<Genre, GenreCreateDto>().ReverseMap();
         CreateMap<Genre, GenreUpdateDto>().ReverseMap();
         CreateMap<Genre, GenreReadDto>().ReverseMap();
+        
         CreateMap<Author, AuthorCreateDTO>().ReverseMap();
         CreateMap<Author, AuthorUpdateDTO>().ReverseMap();
-        CreateMap<Author, AuthorReadDTO>().ReverseMap();
+        CreateMap<Author, AuthorReadDTO>()
+            .ForMember(dest => dest.BooksCount, opt => opt.MapFrom(src => src.BookAuthors != null ? src.BookAuthors.Count : 0))
+            .ReverseMap();
+
         CreateMap<Book, BookReadDto>().ReverseMap();
         CreateMap<Book, BookCreateDto>().ReverseMap();
         CreateMap<Book, BookUpdateDto>().ReverseMap();
-        CreateMap<CartItem,CartItemCreateDto>().ReverseMap();
-        CreateMap<CartItem,CartItemUpdateDto>().ReverseMap();
-        CreateMap<CartItem,CartItemDto>().ReverseMap();
+
+        CreateMap<CartItem, CartItemCreateDto>().ReverseMap();
+        CreateMap<CartItem, CartItemUpdateDto>().ReverseMap();
+        CreateMap<CartItem, CartItemDto>().ReverseMap();
     }
 }

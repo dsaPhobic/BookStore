@@ -14,6 +14,7 @@ import accountActions from "./account/state/account.actions";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { CartActions } from "./cart/state/cart.actions";
 import { selectCartCount } from "./cart/state/cart.selectors";
+import { tokenUtils } from "./utils/token.utils";
 
 @Component({
   selector: "app-root",
@@ -79,7 +80,12 @@ export class AppComponent implements OnInit, OnDestroy {
       )
       .subscribe();
   }
+
   ngOnInit(): void {
+    const savedToken = tokenUtils.getToken();
+    if (savedToken && !tokenUtils.isTokenExpired(savedToken)) {
+      this.store.dispatch(accountActions.loadAccountInfo({ accessToken: savedToken }));
+    }
     this.loadCartItems();
   }
 

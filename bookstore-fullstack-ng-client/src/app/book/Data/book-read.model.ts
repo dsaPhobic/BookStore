@@ -6,8 +6,16 @@ export interface BookReadModel {
   title: string;
   description: string;
   price: number;
-  imageUrl: null;
+  imageUrl?: string | null;
+  imagePublicId?: string | null;
   publishedYear: number;
+  isbn?: string | null;
+  pageCount?: number | null;
+  language?: string | null;
+  format?: string | null;
+  publisher?: string | null;
+  status?: string | null;
+  createdAt?: string;
   authors: Author[];
   genres: GenreModel[];
   authorNames: Array<string>;

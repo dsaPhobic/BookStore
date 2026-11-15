@@ -33,7 +33,7 @@ public class BooksControllerTests
         _bookRepository = Substitute.For<IBookRepository>();
         _mapper = Substitute.For<IMapper>();
         _fileService = Substitute.For<IFileService>();
-        _controller = new BooksController(_mapper, _bookRepository, _fileService);
+        _controller = new BooksController(_mapper, _bookRepository);
         _cache= Substitute.For<IOutputCacheStore>();
     }
 
@@ -251,3 +251,4 @@ public class BooksControllerTests
     }
 
 }
+

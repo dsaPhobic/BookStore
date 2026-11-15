@@ -22,6 +22,7 @@ import { SortModel } from "../common/sort.model";
 import { AuthorFilter } from "./ui/author.filter";
 import { MatDialog } from "@angular/material/dialog";
 import { AuthorDialogComponent } from "./ui/author-dialog.component";
+import { AuthorBooksDialogComponent } from "./ui/author-books-dialog.component";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 
@@ -38,22 +39,18 @@ import { MatIconModule } from "@angular/material/icon";
     MatIconModule,
   ],
   template: `
-    <div class="page-header">
+    <div class="header-container">
       <div>
-        <span class="eyebrow">CATALOG ADMINISTRATION</span>
-        <h1>Manage Authors</h1>
-        <p class="page-subtitle">
-          Maintain your directory of book authors and writers.
-        </p>
+        <h1 class="page-title">Quản trị Tác giả & Danh mục (PIM)</h1>
+        <p class="subtitle">Quản lý hồ sơ tác giả, ảnh chân dung Cloudinary và liên kết tác phẩm</p>
       </div>
       <button
         type="button"
-        (click)="onAddUpdate('Add', null)"
-        mat-flat-button
-        color="accent"
+        (click)="onAddUpdate('Thêm mới', null)"
+        mat-raised-button
+        color="primary"
       >
-        <mat-icon>person_add</mat-icon>
-        Add Author
+        <mat-icon>add</mat-icon> Thêm Tác giả
       </button>
     </div>
 
@@ -65,6 +62,7 @@ import { MatIconModule } from "@angular/material/icon";
         (edit)="onEdit($event)"
         (delete)="onDelete($event)"
         (sort)="onSort($event)"
+        (viewBooks)="onViewBooks($event)"
       />
     </ng-container>
 
@@ -75,7 +73,24 @@ import { MatIconModule } from "@angular/material/icon";
       />
     </ng-container>
   `,
-  styles: [``],
+  styles: [`
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .page-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .subtitle {
+      margin: 4px 0 0 0;
+      color: #64748b;
+      font-size: 13px;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthorComponent implements OnDestroy {
@@ -88,13 +103,20 @@ export class AuthorComponent implements OnDestroy {
   error$ = this.store.select(selectAuthorError);
 
   onEdit(author: Author) {
-    this.onAddUpdate("Update", author);
+    this.onAddUpdate("Chỉnh sửa", author);
+  }
+
+  onViewBooks(author: Author) {
+    this.dialog.open(AuthorBooksDialogComponent, {
+      data: { author },
+      width: "700px",
+    });
   }
 
   onAddUpdate(action: string, author: Author | null = null) {
     const dialogRef = this.dialog.open(AuthorDialogComponent, {
-      data: { author, title: action + " Author" },
-      width: "420px",
+      data: { author, title: action + " Tác giả" },
+      width: "560px",
     });
 
     dialogRef.componentInstance.submit
@@ -118,7 +140,7 @@ export class AuthorComponent implements OnDestroy {
   onDelete(author: Author) {
     if (
       window.confirm(
-        `Are you sure to delete the record (authorName: ${author.authorName})?`
+        `Bạn có chắc chắn muốn xóa tác giả: "${author.authorName}"?`
       )
     ) {
       this.store.dispatch(authorActions.deleteAuthor({ id: author.id }));

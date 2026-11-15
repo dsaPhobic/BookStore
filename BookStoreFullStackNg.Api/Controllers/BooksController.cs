@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
 using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.Domain;
@@ -11,51 +13,61 @@ using BookStoreFullStackNg.Data.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BookStoreFullStackNg.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles =Roles.Admin)]
+[Authorize(Roles = Roles.Admin)]
 public class BooksController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly IBookRepository _bookRepo;
-    private readonly IFileService _fileService;
-    public BooksController(IMapper mapper, IBookRepository bookRepo, IFileService fileService)
+    private readonly ICloudinaryService? _cloudinaryService;
+    private readonly IIsbnLookupService? _isbnLookupService;
+
+    [ActivatorUtilitiesConstructor]
+    public BooksController(
+        IMapper mapper,
+        IBookRepository bookRepo,
+        ICloudinaryService? cloudinaryService = null,
+        IIsbnLookupService? isbnLookupService = null)
     {
         _mapper = mapper;
         _bookRepo = bookRepo;
-        _fileService = fileService;
-
+        _cloudinaryService = cloudinaryService;
+        _isbnLookupService = isbnLookupService;
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddBook(BookCreateDto bookCreateDto,IOutputCacheStore cache)
+    public async Task<IActionResult> AddBook([FromForm] BookCreateDto bookCreateDto, IOutputCacheStore cache)
     {
-        if (bookCreateDto.ImageFile?.Length > 1 * 1024 * 1024)
+        if (bookCreateDto.ImageFile?.Length > 3 * 1024 * 1024)
         {
-            throw new BadRequestException("File size should not exceed 1 MB");
+            throw new BadRequestException("File size should not exceed 3 MB");
         }
-        if (bookCreateDto.ImageFile != null)
+
+        if (bookCreateDto.ImageFile != null && _cloudinaryService != null)
         {
-            string[] allowedFileExtentions = [".jpg", ".jpeg", ".png",".jfif"];
-            string createdImageName = await _fileService.SaveFileAsync(bookCreateDto.ImageFile, allowedFileExtentions);
-            bookCreateDto.ImageUrl = createdImageName;
+            var uploadResult = await _cloudinaryService.UploadImageAsync(bookCreateDto.ImageFile, "books", 400, 600);
+            bookCreateDto.ImageUrl = uploadResult.Url;
+            bookCreateDto.ImagePublicId = uploadResult.PublicId;
         }
 
         BookReadDto createdBook = await _bookRepo.AddBookAsync(bookCreateDto);
+
         // evicting the cache
         await cache.EvictByTagAsync("tag-book", default);
         return CreatedAtRoute(nameof(GetBookById), new { id = createdBook.Id }, createdBook);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBook(int id, BookUpdateDto bookToUpdate,IOutputCacheStore cache)
+    public async Task<IActionResult> UpdateBook(int id, [FromForm] BookUpdateDto bookToUpdate, IOutputCacheStore cache)
     {
         if (id != bookToUpdate.Id)
         {
-            throw new BadRequestException($"Id mismatch");
+            throw new BadRequestException("Id mismatch");
         }
 
         var existingBook = await _bookRepo.GetBookByIdAsync(id);
@@ -64,61 +76,49 @@ public class BooksController : ControllerBase
             throw new NotFoundException($"Book with id:{id} does not found");
         }
 
-        // If book have image, but you forget to pass it
-        if(string.IsNullOrWhiteSpace(existingBook.ImageUrl)==false && string.IsNullOrWhiteSpace(bookToUpdate.ImageUrl))
-        {
-            throw new NotFoundException("You are not passing the imageUrl, while this book has an image");
-        }
-
-        // if someone is manually trying to change the imageUrl
-        // if book has image, you are not uploading the file but you are passing the different url than the existing one
-        if (bookToUpdate.ImageFile == null && existingBook.ImageUrl != bookToUpdate.ImageUrl)
-        {
-            throw new NotFoundException("Invalid imageUrl");
-        }
-
-        string? oldImage = existingBook.ImageUrl;
         if (bookToUpdate.ImageFile != null)
         {
-            if (bookToUpdate.ImageFile?.Length > 1 * 1024 * 1024)
+            if (bookToUpdate.ImageFile.Length > 3 * 1024 * 1024)
             {
-                throw new BadRequestException("File size should not exceed 1 MB");
+                throw new BadRequestException("File size should not exceed 3 MB");
             }
-            string[] allowedFileExtentions = [".jpg", ".jpeg", ".png",".jfif"];
-            string createdImageName = await _fileService.SaveFileAsync(bookToUpdate.ImageFile!, allowedFileExtentions);
-            bookToUpdate.ImageUrl = createdImageName;
+
+            if (_cloudinaryService != null)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(bookToUpdate.ImageFile, "books", 400, 600);
+
+                // Delete old image from Cloudinary
+                if (!string.IsNullOrEmpty(existingBook.ImagePublicId))
+                {
+                    await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
+                }
+
+                bookToUpdate.ImageUrl = uploadResult.Url;
+                bookToUpdate.ImagePublicId = uploadResult.PublicId;
+            }
+        }
+        else
+        {
+            // Preserve existing image if no new file is uploaded
+            bookToUpdate.ImageUrl = existingBook.ImageUrl;
+            bookToUpdate.ImagePublicId = existingBook.ImagePublicId;
         }
 
         await _bookRepo.UpdateBookAsync(bookToUpdate);
 
-        // if image is updated, then we have to delete old image from directory
-        if (bookToUpdate.ImageFile != null)
-        {
-            // however, this condition will never meet
-            if (string.IsNullOrWhiteSpace(oldImage))
-            {
-                throw new BadRequestException("Old image is null, so can't be deleted");
-            }
-            _fileService.DeleteFile(oldImage);
-        }
-
         // evicting cache
         await cache.EvictByTagAsync("tag-book", default);
 
-
-        // return the update entries
         BookReadDto? bookToReturn = await _bookRepo.GetBookByIdAsync(bookToUpdate.Id);
-
         return Ok(bookToReturn);
     }
 
-
     [AllowAnonymous]
-    [OutputCache(VaryByQueryKeys = ["PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "GenreIds"])]
+    [OutputCache(VaryByQueryKeys = new[] { "PageSize", "PageNumber", "SortBy", "SearchTerm", "PublishedFrom", "PublishedTo", "GenreIds" })]
     [HttpGet]
     public async Task<IActionResult> GetBooks([FromQuery] BookQueryParameter queryParameter)
     {
-        var pagedBooks = await _bookRepo.GetBooksAsync(queryParameter); // have related data
+        var pagedBooks = await _bookRepo.GetBooksAsync(queryParameter);
         var books = pagedBooks.Items.Select(b =>
             new BookReadDto
             {
@@ -127,10 +127,25 @@ public class BooksController : ControllerBase
                 Description = b.Description,
                 Price = b.Price,
                 ImageUrl = b.ImageUrl,
+                ImagePublicId = b.ImagePublicId,
                 PublishedYear = b.PublishedYear,
-                Authors = b.BookAuthors.Select(ba => new AuthorReadDTO(ba.Author.Id, ba.Author.AuthorName)).ToList(),
+                ISBN = b.ISBN,
+                PageCount = b.PageCount,
+                Language = b.Language,
+                Format = b.Format,
+                Publisher = b.Publisher,
+                Status = b.Status,
+                CreatedAt = b.CreatedAt,
+                Authors = b.BookAuthors.Select(ba => new AuthorReadDTO
+                {
+                    Id = ba.Author.Id,
+                    AuthorName = ba.Author.AuthorName,
+                    AvatarUrl = ba.Author.AvatarUrl,
+                    Nationality = ba.Author.Nationality
+                }).ToList(),
                 Genres = b.BookGenres.Select(bg => new GenreReadDto(bg.Genre.Id, bg.Genre.GenreName)).ToList()
             }).ToList();
+
         var newBookPagedList = new PagedList<BookReadDto>(books, pagedBooks.TotalCount, pagedBooks.PageNumber, pagedBooks.PageSize);
         return Ok(newBookPagedList);
     }
@@ -148,22 +163,48 @@ public class BooksController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteBook(int id,IOutputCacheStore cache)
+    public async Task<IActionResult> DeleteBook(int id, IOutputCacheStore cache)
     {
         BookReadDto? existingBook = await _bookRepo.GetBookByIdAsync(id);
         if (existingBook == null)
         {
             throw new NotFoundException($"Book with id:{id} does not found");
         }
-        Book book = _mapper.Map<Book>(existingBook);
-        await _bookRepo.DeleteBookAsync(book);
-        // After deleting product from database,remove file from directory.
-        if (string.IsNullOrEmpty(existingBook.ImageUrl) == false)
-        {
-            _fileService.DeleteFile(existingBook.ImageUrl);
-        }
-        await cache.EvictByTagAsync("tag-book", default);
 
+        var book = await _bookRepo.GetBookByIdAsync(id);
+        Book bookEntity = new Book
+        {
+            Id = existingBook.Id,
+            Title = existingBook.Title,
+            Description = existingBook.Description
+        };
+
+        await _bookRepo.DeleteBookAsync(bookEntity);
+
+        if (!string.IsNullOrEmpty(existingBook.ImagePublicId) && _cloudinaryService != null)
+        {
+            await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
+        }
+
+        await cache.EvictByTagAsync("tag-book", default);
         return NoContent();
+    }
+
+    [HttpGet("isbn-lookup/{isbn}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> LookupByIsbn(string isbn)
+    {
+        if (string.IsNullOrWhiteSpace(isbn))
+        {
+            throw new BadRequestException("ISBN cannot be empty.");
+        }
+
+        if (_isbnLookupService == null)
+        {
+            return Ok(new IsbnLookupResultDto { Found = false, ISBN = isbn });
+        }
+
+        var result = await _isbnLookupService.LookupByIsbnAsync(isbn);
+        return Ok(result);
     }
 }

@@ -1,4 +1,8 @@
-﻿using BookStoreFullStackNg.Data.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Domain;
 using BookStoreFullStackNg.Data.DTOs;
 using BookStoreFullStackNg.Data.DTOs.Author;
@@ -23,7 +27,7 @@ public class BookRepository : IBookRepository
 
     public async Task<BookReadDto> AddBookAsync(BookCreateDto bookToCreate)
     {
-        using var transaction = _context.Database.BeginTransaction();
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             int bookId = await CreateBook(bookToCreate);
@@ -41,10 +45,10 @@ public class BookRepository : IBookRepository
 
             return book;
         }
-        catch (Exception ex)
+        catch
         {
-            transaction.Rollback();
-            throw ex;
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
@@ -61,6 +65,7 @@ public class BookRepository : IBookRepository
             _context.BookGenres.Add(new BookGenre(0, bookId, genreId));
         }
     }
+
     private async Task AddBookAuthors(int bookId, List<int> authorIds)
     {
         foreach (var authorId in authorIds)
@@ -81,8 +86,16 @@ public class BookRepository : IBookRepository
             Title = bookToCreate.Title,
             Price = bookToCreate.Price,
             PublishedYear = bookToCreate.PublishedYear,
-            ImageUrl= bookToCreate.ImageUrl,
-            Description = bookToCreate.Description
+            ImageUrl = bookToCreate.ImageUrl,
+            ImagePublicId = bookToCreate.ImagePublicId,
+            Description = bookToCreate.Description ?? string.Empty,
+            ISBN = bookToCreate.ISBN,
+            PageCount = bookToCreate.PageCount,
+            Language = bookToCreate.Language,
+            Format = bookToCreate.Format,
+            Publisher = bookToCreate.Publisher,
+            Status = string.IsNullOrWhiteSpace(bookToCreate.Status) ? "Active" : bookToCreate.Status,
+            CreatedAt = DateTime.UtcNow
         };
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
@@ -92,19 +105,28 @@ public class BookRepository : IBookRepository
 
     public async Task UpdateBookAsync(BookUpdateDto bookToUpdate)
     {
-        using var transaction = _context.Database.BeginTransaction();
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // updating book
-            var book = new Book
+            var book = await _context.Books.FindAsync(bookToUpdate.Id);
+            if (book == null)
             {
-                Id = bookToUpdate.Id,
-                Title = bookToUpdate.Title,
-                Price = bookToUpdate.Price,
-                PublishedYear = bookToUpdate.PublishedYear,
-                ImageUrl=bookToUpdate.ImageUrl,
-                Description = bookToUpdate.Description
-            };
+                throw new InvalidOperationException($"Book with id: {bookToUpdate.Id} not found");
+            }
+
+            book.Title = bookToUpdate.Title;
+            book.Price = bookToUpdate.Price;
+            book.PublishedYear = bookToUpdate.PublishedYear;
+            book.ImageUrl = bookToUpdate.ImageUrl;
+            book.ImagePublicId = bookToUpdate.ImagePublicId;
+            book.Description = bookToUpdate.Description ?? string.Empty;
+            book.ISBN = bookToUpdate.ISBN;
+            book.PageCount = bookToUpdate.PageCount;
+            book.Language = bookToUpdate.Language;
+            book.Format = bookToUpdate.Format;
+            book.Publisher = bookToUpdate.Publisher;
+            book.Status = string.IsNullOrWhiteSpace(bookToUpdate.Status) ? "Active" : bookToUpdate.Status;
+
             _context.Books.Update(book);
 
             // delete all the related book authors to avoid duplicacy
@@ -122,10 +144,10 @@ public class BookRepository : IBookRepository
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
         }
-        catch (Exception ex)
+        catch
         {
             await transaction.RollbackAsync();
-            throw ex;
+            throw;
         }
     }
 
@@ -143,11 +165,26 @@ public class BookRepository : IBookRepository
                     Title = b.Title,
                     Description = b.Description,
                     PublishedYear = b.PublishedYear,
-                    ImageUrl=b.ImageUrl,
+                    ImageUrl = b.ImageUrl,
+                    ImagePublicId = b.ImagePublicId,
                     Price = b.Price,
-                    Authors = b.BookAuthors.Select(ab => new AuthorReadDTO(ab.Author.Id, ab.Author.AuthorName)).ToList(),
+                    ISBN = b.ISBN,
+                    PageCount = b.PageCount,
+                    Language = b.Language,
+                    Format = b.Format,
+                    Publisher = b.Publisher,
+                    Status = b.Status,
+                    CreatedAt = b.CreatedAt,
+                    Authors = b.BookAuthors.Select(ab => new AuthorReadDTO
+                    {
+                        Id = ab.Author.Id,
+                        AuthorName = ab.Author.AuthorName,
+                        AvatarUrl = ab.Author.AvatarUrl,
+                        Nationality = ab.Author.Nationality
+                    }).ToList(),
                     Genres = b.BookGenres.Select(bg => new GenreReadDto(bg.Genre.Id, bg.Genre.GenreName)).ToList()
                 }).FirstOrDefaultAsync();
+
         return book;
     }
 
@@ -160,11 +197,13 @@ public class BookRepository : IBookRepository
                 .ThenInclude(x => x.Genre)
                 .AsQueryable();
 
-        // filter by search term
+        // filter by search term (Title or ISBN)
         if (!string.IsNullOrEmpty(queryParameters.SearchTerm))
         {
+            var term = queryParameters.SearchTerm.ToLower();
             booksQuery = booksQuery.Where(a =>
-            a.Title.ToLower().Contains(queryParameters.SearchTerm)
+                a.Title.ToLower().Contains(term) ||
+                (a.ISBN != null && a.ISBN.ToLower().Contains(term))
             );
         }
 
@@ -175,23 +214,26 @@ public class BookRepository : IBookRepository
         }
 
         // filter by genreIds
-        if(queryParameters.GenreIds.Count>0)
+        if (queryParameters.GenreIds.Count > 0)
         {
-            booksQuery = booksQuery.Where(b => b.BookGenres.Any(bg=> queryParameters.GenreIds.Contains(bg.GenreId)));
+            booksQuery = booksQuery.Where(b => b.BookGenres.Any(bg => queryParameters.GenreIds.Contains(bg.GenreId)));
         }
 
         if (!string.IsNullOrEmpty(queryParameters.SortBy))
         {
             booksQuery = _sortHelper.ApplySort(booksQuery, queryParameters.SortBy);
         }
+        else
+        {
+            booksQuery = booksQuery.OrderByDescending(b => b.Id);
+        }
 
         return await PagedList<Book>.ToPagedListAsync(booksQuery, queryParameters.PageNumber, queryParameters.PageSize);
     }
 
-
     public async Task DeleteBookAsync(Book book)
     {
-        using var transaction = _context.Database.BeginTransaction();
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             _context.BookAuthors.RemoveRange(_context.BookAuthors.Where(ba => ba.BookId == book.Id));
@@ -200,11 +242,11 @@ public class BookRepository : IBookRepository
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
         }
-        catch (Exception ex)
+        catch
         {
             await transaction.RollbackAsync();
-            throw ex;
+            throw;
         }
     }
-
 }
+
