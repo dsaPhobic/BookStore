@@ -124,8 +124,8 @@ import { HttpErrorResponse } from "@angular/common/http";
         </div>
         <p class="coupon-message" *ngIf="couponResult() as result">
           {{ result.message }} You save
-          {{ result.discountAmount | currency : "INR" }}.
-          Estimated total: {{ result.total | currency : "INR" }}.
+          {{ result.discountAmount | currency : "USD" }}.
+          Estimated total: {{ result.total | currency : "USD" }}.
         </p>
         <p class="coupon-error" *ngIf="couponError() as error">{{ error }}</p>
 

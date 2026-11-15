@@ -7,10 +7,15 @@ import {
   selectUserOrders,
   selectUserOrderTotalCount,
 } from "./state/user-order/user-order.selectors";
-import { Observable } from "rxjs";
+import { Observable, Subject, takeUntil } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { UserOrderModel } from "./data/user-order.model";
-import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  inject,
+} from "@angular/core";
 import { UserOrderListComponent } from "./ui/user-order-list.component";
 import { PageSelectorModel } from "../common/page-selector.model";
 import { UserOrderPaginatorComponent } from "./ui/user-order-paginator.component";
@@ -19,6 +24,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { RouterModule } from "@angular/router";
+import { NotificationService } from "../notifications/notification.service";
 
 @Component({
   selector: "app-user-order",
@@ -113,8 +119,11 @@ import { RouterModule } from "@angular/router";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserOrderComponent {
+export class UserOrderComponent implements OnDestroy {
   private store = inject(Store);
+  private notificationService = inject(NotificationService);
+  private destroyed$ = new Subject<void>();
+
   totalCount$ = this.store.select(selectUserOrderTotalCount);
   loading$ = this.store.select(selectUserOrderLoading);
   error$ = this.store.select(selectUserOrderError);
@@ -168,5 +177,15 @@ export class UserOrderComponent {
 
   constructor() {
     this.loadUserOrders();
+
+    // Keep the visible list in step with live status updates.
+    this.notificationService.orderStatusChanged$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe(() => this.loadUserOrders());
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 }

@@ -61,12 +61,12 @@ import { getImageUrl } from "../../utils/image.utils";
       <div class="isbn-lookup-box">
         <div class="lookup-input-group">
           <mat-form-field appearance="outline" class="isbn-field">
-            <mat-label>Mã ISBN (10 hoặc 13 chữ số)</mat-label>
+            <mat-label>ISBN (10 or 13 digits)</mat-label>
             <input
               type="text"
               matInput
               [formControl]="isbnLookupControl"
-              placeholder="VD: 9780132350884, 9780131495050"
+              placeholder="e.g. 9780132350884, 9780131495050"
             />
           </mat-form-field>
           <button
@@ -79,7 +79,7 @@ import { getImageUrl } from "../../utils/image.utils";
           >
             <mat-spinner diameter="18" *ngIf="isLookingUp()"></mat-spinner>
             <mat-icon *ngIf="!isLookingUp()">search</mat-icon>
-            Tra cứu tự động qua Google Books
+            Auto lookup via Google Books
           </button>
         </div>
         <div *ngIf="lookupMessage()" class="lookup-msg" [class.success]="lookupSuccess()">
@@ -94,7 +94,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <!-- Title -->
         <mat-form-field appearance="fill" class="col-span-2">
-          <mat-label>Tựa sách (Title) *</mat-label>
+          <mat-label>Title *</mat-label>
           <input type="text" matInput formControlName="title" />
         </mat-form-field>
 
@@ -106,63 +106,63 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <!-- Price -->
         <mat-form-field appearance="fill">
-          <mat-label>Giá bán (VNĐ) *</mat-label>
+          <mat-label>Price (USD) *</mat-label>
           <input type="number" matInput formControlName="price" />
         </mat-form-field>
 
         <!-- Published Year -->
         <mat-form-field appearance="fill">
-          <mat-label>Năm xuất bản *</mat-label>
+          <mat-label>Published Year *</mat-label>
           <input type="number" matInput formControlName="publishedYear" />
         </mat-form-field>
 
         <!-- Page Count -->
         <mat-form-field appearance="fill">
-          <mat-label>Số trang</mat-label>
+          <mat-label>Page Count</mat-label>
           <input type="number" matInput formControlName="pageCount" />
         </mat-form-field>
 
         <!-- Language -->
         <mat-form-field appearance="fill">
-          <mat-label>Ngôn ngữ</mat-label>
-          <input type="text" matInput formControlName="language" placeholder="Tiếng Việt, English..." />
+          <mat-label>Language</mat-label>
+          <input type="text" matInput formControlName="language" placeholder="English, Vietnamese..." />
         </mat-form-field>
 
         <!-- Format -->
         <mat-form-field appearance="fill">
-          <mat-label>Định dạng bìa</mat-label>
+          <mat-label>Format</mat-label>
           <mat-select formControlName="format">
-            <mat-option value="Paperback">Bìa mềm (Paperback)</mat-option>
-            <mat-option value="Hardcover">Bìa cứng (Hardcover)</mat-option>
-            <mat-option value="E-Book">Sách điện tử (E-Book)</mat-option>
+            <mat-option value="Paperback">Paperback</mat-option>
+            <mat-option value="Hardcover">Hardcover</mat-option>
+            <mat-option value="E-Book">E-Book</mat-option>
           </mat-select>
         </mat-form-field>
 
         <!-- Publisher -->
         <mat-form-field appearance="fill">
-          <mat-label>Nhà xuất bản</mat-label>
+          <mat-label>Publisher</mat-label>
           <input type="text" matInput formControlName="publisher" />
         </mat-form-field>
 
         <!-- Status -->
         <mat-form-field appearance="fill">
-          <mat-label>Trạng thái</mat-label>
+          <mat-label>Status</mat-label>
           <mat-select formControlName="status">
-            <mat-option value="Active">Đang kinh doanh (Active)</mat-option>
-            <mat-option value="Draft">Bản nháp (Draft)</mat-option>
-            <mat-option value="Archived">Ngừng kinh doanh (Archived)</mat-option>
+            <mat-option value="Active">Active</mat-option>
+            <mat-option value="Draft">Draft</mat-option>
+            <mat-option value="Archived">Archived</mat-option>
           </mat-select>
         </mat-form-field>
 
         <!-- Description -->
         <mat-form-field appearance="fill" class="col-span-3">
-          <mat-label>Mô tả nội dung tóm tắt *</mat-label>
+          <mat-label>Short Description *</mat-label>
           <textarea matInput formControlName="description" rows="3"></textarea>
         </mat-form-field>
 
         <!-- Authors Multi-select -->
         <div class="col-span-1-5">
-          <label class="select-label">Tác giả *</label>
+          <label class="select-label">Authors *</label>
           <ng-select
             [items]="authorsList"
             [multiple]="true"
@@ -170,7 +170,7 @@ import { getImageUrl } from "../../utils/image.utils";
             [hideSelected]="true"
             bindLabel="authorName"
             bindValue="id"
-            placeholder="Chọn tác giả..."
+            placeholder="Select authors..."
             formControlName="authorIds"
           >
           </ng-select>
@@ -178,7 +178,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <!-- Genres Multi-select -->
         <div class="col-span-1-5">
-          <label class="select-label">Thể loại *</label>
+          <label class="select-label">Genres *</label>
           <ng-select
             [items]="genresList"
             [multiple]="true"
@@ -186,7 +186,7 @@ import { getImageUrl } from "../../utils/image.utils";
             [hideSelected]="true"
             bindLabel="genreName"
             bindValue="id"
-            placeholder="Chọn thể loại..."
+            placeholder="Select genres..."
             formControlName="genreIds"
           >
           </ng-select>
@@ -198,23 +198,23 @@ import { getImageUrl } from "../../utils/image.utils";
             <img
               *ngIf="previewImageUrl"
               [src]="previewImageUrl"
-              alt="Bìa sách"
+              alt="Book cover"
               class="book-cover-preview"
             />
             <div *ngIf="!previewImageUrl" class="cover-placeholder">
               <mat-icon>image</mat-icon>
-              <span>Chưa có ảnh bìa</span>
+              <span>No cover image</span>
             </div>
           </div>
           <div class="image-upload-controls">
-            <label class="upload-btn-label">Tải lên ảnh bìa sách (Cloudinary CDN):</label>
+            <label class="upload-btn-label">Upload book cover (Cloudinary CDN):</label>
             <input type="file" accept="image/*" (change)="onFileChange($event)" />
-            <small class="upload-note">Ảnh sẽ được tự động crop và nén WebP/AVIF tối ưu trên Cloudinary.</small>
+            <small class="upload-note">Images are automatically cropped and optimized to WebP/AVIF on Cloudinary.</small>
           </div>
         </div>
 
         <div mat-dialog-actions align="end" class="col-span-3 actions-bar">
-          <button mat-button (click)="onCanceled()">Hủy</button>
+          <button mat-button (click)="onCanceled()">Cancel</button>
           <button
             mat-raised-button
             color="primary"
@@ -222,7 +222,7 @@ import { getImageUrl } from "../../utils/image.utils";
             [disabled]="bookForm.invalid"
             cdkFocusInitial
           >
-            Lưu sách
+            Save
           </button>
         </div>
       </form>
@@ -389,7 +389,7 @@ export class BookDialogComponent {
     publishedYear: new FormControl<number>(new Date().getFullYear(), Validators.required),
     isbn: new FormControl<string>(""),
     pageCount: new FormControl<number | null>(null),
-    language: new FormControl<string>("Tiếng Việt"),
+    language: new FormControl<string>("English"),
     format: new FormControl<string>("Paperback"),
     publisher: new FormControl<string>(""),
     status: new FormControl<string>("Active"),
@@ -406,7 +406,7 @@ export class BookDialogComponent {
     if (!isbn) return;
 
     this.isLookingUp.set(true);
-    this.lookupMessage.set("Đang tìm thông tin trên Google Books...");
+    this.lookupMessage.set("Searching Google Books...");
     this.lookupSuccess.set(false);
 
     this.bookService.lookupIsbn(isbn).subscribe({
@@ -416,8 +416,8 @@ export class BookDialogComponent {
           this.lookupSuccess.set(true);
 
           const authorNames = (res.authors || []).join(", ");
-          const authorMsg = authorNames ? ` (Tác giả: ${authorNames})` : "";
-          this.lookupMessage.set(`Đã tìm thấy sách: "${res.title}"${authorMsg}! Dữ liệu và tác giả đã được tự động điền.`);
+          const authorMsg = authorNames ? ` (Authors: ${authorNames})` : "";
+          this.lookupMessage.set(`Found book: "${res.title}"${authorMsg}! Details and authors have been filled in automatically.`);
 
           this.bookForm.patchValue({
             isbn: res.isbn || isbn,
@@ -462,13 +462,13 @@ export class BookDialogComponent {
           }
         } else {
           this.lookupSuccess.set(false);
-          this.lookupMessage.set("Không tìm thấy thông tin trên Google Books cho mã ISBN này. Bạn hãy nhập thủ công.");
+          this.lookupMessage.set("No information found on Google Books for this ISBN. Please enter the details manually.");
         }
       },
       error: () => {
         this.isLookingUp.set(false);
         this.lookupSuccess.set(false);
-        this.lookupMessage.set("Lỗi kết nối khi tra cứu ISBN.");
+        this.lookupMessage.set("Connection error while looking up ISBN.");
       },
     });
   }
@@ -534,7 +534,7 @@ export class BookDialogComponent {
         publishedYear: b.publishedYear,
         isbn: b.isbn || "",
         pageCount: b.pageCount || null,
-        language: b.language || "Tiếng Việt",
+        language: b.language || "English",
         format: b.format || "Paperback",
         publisher: b.publisher || "",
         status: b.status || "Active",

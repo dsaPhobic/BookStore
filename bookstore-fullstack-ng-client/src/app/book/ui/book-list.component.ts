@@ -38,13 +38,13 @@ import { getImageUrl } from "../../utils/image.utils";
     >
       <!-- Cover Image Column (Cloudinary / Local) -->
       <ng-container matColumnDef="imageUrl">
-        <th mat-header-cell *matHeaderCellDef>Bìa sách</th>
+        <th mat-header-cell *matHeaderCellDef>Cover</th>
         <td mat-cell *matCellDef="let element">
           <div class="thumb-container">
             <img
               *ngIf="element.imageUrl"
               [src]="getImageUrl(element.imageUrl)"
-              alt="Bìa sách"
+              alt="Book cover"
               class="book-thumb"
             />
             <div *ngIf="!element.imageUrl" class="no-thumb">
@@ -62,7 +62,7 @@ import { getImageUrl } from "../../utils/image.utils";
           mat-sort-header
           sortActionDescription="sort by title"
         >
-          Tựa sách & ISBN
+          Title & ISBN
         </th>
         <td mat-cell *matCellDef="let element">
           <div class="title-cell">
@@ -79,7 +79,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
       <!-- Description Column -->
       <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Mô tả</th>
+        <th mat-header-cell *matHeaderCellDef>Description</th>
         <td mat-cell *matCellDef="let element">
           <span class="desc-text" [matTooltip]="element.description">
             {{ element.description }}
@@ -89,9 +89,9 @@ import { getImageUrl } from "../../utils/image.utils";
 
       <!-- Price Column -->
       <ng-container matColumnDef="price">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Giá</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
         <td mat-cell *matCellDef="let element" class="price-cell">
-          {{ element.price | currency : "VND" : "symbol" }}
+          {{ element.price | currency : "USD" }}
         </td>
       </ng-container>
 
@@ -103,14 +103,14 @@ import { getImageUrl } from "../../utils/image.utils";
           mat-sort-header
           sortActionDescription="sort by published year"
         >
-          Năm XB
+          Published Year
         </th>
         <td mat-cell *matCellDef="let element">{{ element.publishedYear }}</td>
       </ng-container>
 
       <!-- Authors Column -->
       <ng-container matColumnDef="authors">
-        <th mat-header-cell *matHeaderCellDef>Tác giả</th>
+        <th mat-header-cell *matHeaderCellDef>Authors</th>
         <td mat-cell *matCellDef="let element">
           <span class="author-badge">{{ element.authorNames }}</span>
         </td>
@@ -118,7 +118,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
       <!-- Genres Column -->
       <ng-container matColumnDef="genres">
-        <th mat-header-cell *matHeaderCellDef>Thể loại</th>
+        <th mat-header-cell *matHeaderCellDef>Genres</th>
         <td mat-cell *matCellDef="let element">
           <span class="genre-badge">{{ element.genreNames }}</span>
         </td>
@@ -126,14 +126,14 @@ import { getImageUrl } from "../../utils/image.utils";
 
       <!-- Actions Column -->
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let book" class="actions-cell">
           <button
             type="button"
             (click)="edit.emit(book)"
             mat-mini-fab
             color="accent"
-            matTooltip="Chỉnh sửa sách"
+            matTooltip="Edit book"
           >
             <mat-icon>edit</mat-icon>
           </button>
@@ -142,7 +142,7 @@ import { getImageUrl } from "../../utils/image.utils";
             (click)="delete.emit(book)"
             mat-mini-fab
             color="warn"
-            matTooltip="Xóa sách"
+            matTooltip="Delete book"
           >
             <mat-icon>delete</mat-icon>
           </button>

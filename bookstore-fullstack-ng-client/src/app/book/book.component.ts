@@ -48,16 +48,16 @@ const ADMIN_BOOK_PAGE_SIZES = [5, 10, 25, 50, 100];
   template: `
     <div class="header-container">
       <div>
-        <h1 class="page-title">Quản trị Sách & Thư viện (PIM)</h1>
-        <p class="subtitle">Quản lý kho sách, tối ưu ảnh bìa Cloudinary và tra cứu tự động qua ISBN</p>
+        <h1 class="page-title">Book & Library Management (PIM)</h1>
+        <p class="subtitle">Manage your book inventory, optimize Cloudinary cover images, and auto-fill details via ISBN</p>
       </div>
       <button
         type="button"
-        (click)="onAddUpdate('Thêm mới', null)"
+        (click)="onAddUpdate('Add', null)"
         mat-raised-button
         color="primary"
       >
-        <mat-icon>add</mat-icon> Thêm Sách
+        <mat-icon>add</mat-icon> Add Book
       </button>
     </div>
 
@@ -75,7 +75,7 @@ const ADMIN_BOOK_PAGE_SIZES = [5, 10, 25, 50, 100];
         [books]="books"
         (sort)="onSort($event)"
         (delete)="onDelete($event)"
-        (edit)="onAddUpdate('Chỉnh sửa', $event)"
+        (edit)="onAddUpdate('Edit', $event)"
       ></app-book-list>
     </ng-container>
 
@@ -154,7 +154,7 @@ export class BookComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(BookDialogComponent, {
       data: {
         book,
-        title: action + " Sách",
+        title: action + " Book",
         genres$: this.genres$,
         authors$: this.authors$,
       },
@@ -177,7 +177,7 @@ export class BookComponent implements OnInit, OnDestroy {
 
   onDelete(book: BookReadModel) {
     if (
-      window.confirm(`Bạn có chắc chắn muốn xóa cuốn sách: "${book.title}"?`)
+      window.confirm(`Are you sure you want to delete the book "${book.title}"?`)
     ) {
       this.store.dispatch(BookActions.deleteBook({ id: book.id }));
       this.loadBooks();

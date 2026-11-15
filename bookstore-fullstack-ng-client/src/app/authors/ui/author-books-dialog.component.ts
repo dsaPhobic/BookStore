@@ -29,7 +29,7 @@ import { getImageUrl } from "../../utils/image.utils";
   ],
   template: `
     <h2 mat-dialog-title class="dialog-title">
-      Tác phẩm của tác giả: <strong>{{ data.author.authorName }}</strong>
+      Books by: <strong>{{ data.author.authorName }}</strong>
     </h2>
 
     <div mat-dialog-content class="dialog-content">
@@ -41,19 +41,19 @@ import { getImageUrl } from "../../utils/image.utils";
           class="author-avatar"
         />
         <div>
-          <p *ngIf="data.author.originalName"><strong>Tên thật:</strong> {{ data.author.originalName }}</p>
-          <p *ngIf="data.author.nationality"><strong>Quốc tịch:</strong> {{ data.author.nationality }}</p>
-          <p *ngIf="data.author.bio"><strong>Tiểu sử:</strong> {{ data.author.bio }}</p>
+          <p *ngIf="data.author.originalName"><strong>Real name:</strong> {{ data.author.originalName }}</p>
+          <p *ngIf="data.author.nationality"><strong>Nationality:</strong> {{ data.author.nationality }}</p>
+          <p *ngIf="data.author.bio"><strong>Biography:</strong> {{ data.author.bio }}</p>
         </div>
       </div>
 
       <div *ngIf="loading()" class="spinner-box">
         <mat-spinner diameter="40"></mat-spinner>
-        <span>Đang tải danh sách sách...</span>
+        <span>Loading books...</span>
       </div>
 
       <div *ngIf="!loading() && books().length === 0" class="empty-state">
-        <p>Tác giả này hiện chưa có đầu sách nào trong hệ thống.</p>
+        <p>This author has no books in the system yet.</p>
       </div>
 
       <table
@@ -64,12 +64,12 @@ import { getImageUrl } from "../../utils/image.utils";
       >
         <!-- Image Column -->
         <ng-container matColumnDef="Image">
-          <th mat-header-cell *matHeaderCellDef>Bìa sách</th>
+          <th mat-header-cell *matHeaderCellDef>Cover</th>
           <td mat-cell *matCellDef="let book">
             <img
               *ngIf="book.imageUrl"
               [src]="getImageUrl(book.imageUrl)"
-              alt="Bìa"
+              alt="Cover"
               class="book-thumb"
             />
             <span *ngIf="!book.imageUrl" class="no-img">-</span>
@@ -78,7 +78,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <!-- Title Column -->
         <ng-container matColumnDef="Title">
-          <th mat-header-cell *matHeaderCellDef>Tựa sách</th>
+          <th mat-header-cell *matHeaderCellDef>Title</th>
           <td mat-cell *matCellDef="let book">
             <div class="book-title">{{ book.title }}</div>
             <small *ngIf="book.isbn" class="book-isbn">ISBN: {{ book.isbn }}</small>
@@ -87,19 +87,19 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <!-- Published Year Column -->
         <ng-container matColumnDef="Year">
-          <th mat-header-cell *matHeaderCellDef>Năm XB</th>
+          <th mat-header-cell *matHeaderCellDef>Published Year</th>
           <td mat-cell *matCellDef="let book">{{ book.publishedYear }}</td>
         </ng-container>
 
         <!-- Price Column -->
         <ng-container matColumnDef="Price">
-          <th mat-header-cell *matHeaderCellDef>Giá</th>
-          <td mat-cell *matCellDef="let book">{{ book.price | currency : "VND" : "symbol" }}</td>
+          <th mat-header-cell *matHeaderCellDef>Price</th>
+          <td mat-cell *matCellDef="let book">{{ book.price | currency : "USD" }}</td>
         </ng-container>
 
         <!-- Status Column -->
         <ng-container matColumnDef="Status">
-          <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+          <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let book">
             <span class="status-badge" [class.active]="book.status === 'Active'">
               {{ book.status || 'Active' }}
@@ -114,7 +114,7 @@ import { getImageUrl } from "../../utils/image.utils";
 
     <div mat-dialog-actions align="end">
       <button mat-raised-button color="primary" (click)="dialogRef.close()">
-        Đóng
+        Close
       </button>
     </div>
   `,

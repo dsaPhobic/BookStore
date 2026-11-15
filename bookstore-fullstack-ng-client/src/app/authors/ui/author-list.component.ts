@@ -35,7 +35,7 @@ import { NgIf } from "@angular/common";
     >
       <!-- Avatar Column -->
       <ng-container matColumnDef="Avatar">
-        <th mat-header-cell *matHeaderCellDef>Ảnh</th>
+        <th mat-header-cell *matHeaderCellDef>Avatar</th>
         <td mat-cell *matCellDef="let element">
           <div class="avatar-cell">
             <img
@@ -59,13 +59,13 @@ import { NgIf } from "@angular/common";
           mat-sort-header
           sortActionDescription="sort by author name"
         >
-          Tên tác giả
+          Author Name
         </th>
         <td mat-cell *matCellDef="let element">
           <div class="name-container">
             <span class="main-name">{{ element.authorName }}</span>
-            <span *ngIf="element.isFeatured" class="featured-badge" matTooltip="Tác giả nổi bật">
-              ⭐ Nổi bật
+            <span *ngIf="element.isFeatured" class="featured-badge" matTooltip="Featured author">
+              ⭐ Featured
             </span>
           </div>
           <small *ngIf="element.originalName" class="sub-name">
@@ -76,7 +76,7 @@ import { NgIf } from "@angular/common";
 
       <!-- Nationality Column -->
       <ng-container matColumnDef="Nationality">
-        <th mat-header-cell *matHeaderCellDef>Quốc tịch</th>
+        <th mat-header-cell *matHeaderCellDef>Nationality</th>
         <td mat-cell *matCellDef="let element">
           {{ element.nationality || '-' }}
         </td>
@@ -84,24 +84,24 @@ import { NgIf } from "@angular/common";
 
       <!-- Books Count Column -->
       <ng-container matColumnDef="BooksCount">
-        <th mat-header-cell *matHeaderCellDef>Số đầu sách</th>
+        <th mat-header-cell *matHeaderCellDef>Books</th>
         <td mat-cell *matCellDef="let element">
           <span class="count-badge" (click)="viewBooks.emit(element)">
-            📚 {{ element.booksCount || 0 }} sách
+            📚 {{ element.booksCount || 0 }} books
           </span>
         </td>
       </ng-container>
 
       <!-- Action Column -->
       <ng-container matColumnDef="Action">
-        <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let author" class="action-cell">
           <button
             type="button"
             (click)="viewBooks.emit(author)"
             mat-mini-fab
             color="primary"
-            matTooltip="Xem danh mục sách của tác giả"
+            matTooltip="View this author's books"
           >
             <mat-icon>menu_book</mat-icon>
           </button>
@@ -110,7 +110,7 @@ import { NgIf } from "@angular/common";
             (click)="edit.emit(author)"
             mat-mini-fab
             color="accent"
-            matTooltip="Chỉnh sửa tác giả"
+            matTooltip="Edit author"
           >
             <mat-icon>edit</mat-icon>
           </button>
@@ -119,7 +119,7 @@ import { NgIf } from "@angular/common";
             (click)="delete.emit(author)"
             mat-mini-fab
             color="warn"
-            matTooltip="Xóa tác giả"
+            matTooltip="Delete author"
           >
             <mat-icon>delete</mat-icon>
           </button>
