@@ -152,6 +152,7 @@ public class BooksController : ControllerBase
                 Title = b.Title,
                 Description = b.Description,
                 Price = b.Price,
+                StockQuantity = b.StockQuantity,
                 ImageUrl = b.ImageUrl,
                 ImagePublicId = b.ImagePublicId,
                 PublishedYear = b.PublishedYear,

@@ -1,5 +1,6 @@
 using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Domain;
+using BookStoreFullStackNg.Data.Exceptions;
 using BookStoreFullStackNg.Data.Reopositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,11 @@ public class CartRepository : ICartRepository
     }
     public async Task<CartItem> AddCartItemAsync(int userId,CartItem cartItem)
     {
+        if (cartItem.Quantity <= 0)
+        {
+            throw new InvalidOperationException("Cart quantity must be greater than zero.");
+        }
+
         using var tran= await _context.Database.BeginTransactionAsync();
         try
         {
@@ -31,6 +37,21 @@ public class CartRepository : ICartRepository
 
             // if item is already in cart (scoped to this user's cart), then increment else add
             var existingItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.BookId == cartItem.BookId && ci.CartId == cart.Id);
+            var book = await _context.Books
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item => item.Id == cartItem.BookId);
+            if (book == null)
+            {
+                throw new InvalidOperationException("Book does not exist.");
+            }
+
+            var requestedQuantity = (long)(existingItem?.Quantity ?? 0) + cartItem.Quantity;
+            if (requestedQuantity > book.StockQuantity)
+            {
+                throw new StockUnavailableException(
+                    $"Only {book.StockQuantity} copies of '{book.Title}' are currently available.");
+            }
+
             if (existingItem == null)
             {
                  cartItem.CartId = cart.Id;
@@ -38,7 +59,7 @@ public class CartRepository : ICartRepository
             }
             else
             {
-                existingItem.Quantity += cartItem.Quantity;
+                existingItem.Quantity = (int)requestedQuantity;
                 cartItem = existingItem;
             }
             await _context.SaveChangesAsync();
@@ -55,6 +76,11 @@ public class CartRepository : ICartRepository
 
     public async Task<CartItem> UpdateCartItemAsync(int userId,CartItem cartItem)
     {
+        if (cartItem.Quantity <= 0)
+        {
+            throw new InvalidOperationException("Cart quantity must be greater than zero.");
+        }
+
         var cart = await GetCartByUserIdAsync(userId);
         if (cart == null)
         {
@@ -66,11 +92,37 @@ public class CartRepository : ICartRepository
             throw new InvalidOperationException("You are updating the wrong cart");
         }
 
-        _context.CartItems.Update(cartItem);
+        var existingItem = await _context.CartItems
+            .FirstOrDefaultAsync(item => item.Id == cartItem.Id && item.CartId == cart.Id);
+        if (existingItem == null)
+        {
+            throw new InvalidOperationException("Cart item does not belong to this user's cart.");
+        }
+
+        if (existingItem.BookId != cartItem.BookId)
+        {
+            throw new InvalidOperationException("A cart item's book cannot be changed.");
+        }
+
+        var book = await _context.Books
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == existingItem.BookId);
+        if (book == null)
+        {
+            throw new InvalidOperationException("Book does not exist.");
+        }
+
+        if (cartItem.Quantity > book.StockQuantity)
+        {
+            throw new StockUnavailableException(
+                $"Only {book.StockQuantity} copies of '{book.Title}' are currently available.");
+        }
+
+        existingItem.Quantity = cartItem.Quantity;
         await _context.SaveChangesAsync();
 
-        var createdCartItem = await GetCartItemByCartItemIdAsync(cartItem.Id);
-        return createdCartItem;
+        var updatedCartItem = await GetCartItemByCartItemIdAsync(existingItem.Id);
+        return updatedCartItem;
     }
 
     //public async Task<Cart?> GetCartByIdAsync(int cartId)

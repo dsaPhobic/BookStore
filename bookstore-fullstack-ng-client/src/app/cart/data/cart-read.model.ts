@@ -19,6 +19,7 @@ export interface BookCartModel {
   title: string;
   description: string;
   price: number;
+  stockQuantity: number;
   imageUrl: string;
   publishedYear: number;
   authors: Author[];

@@ -95,6 +95,11 @@ import { getImageUrl } from "../../utils/image.utils";
         </td>
       </ng-container>
 
+      <ng-container matColumnDef="stockQuantity">
+        <th mat-header-cell *matHeaderCellDef>Stock</th>
+        <td mat-cell *matCellDef="let element">{{ element.stockQuantity }}</td>
+      </ng-container>
+
       <!-- Published Year Column -->
       <ng-container matColumnDef="publishedYear">
         <th
@@ -260,6 +265,7 @@ export class BookListComponent {
     "title",
     "description",
     "price",
+    "stockQuantity",
     "publishedYear",
     "authors",
     "genres",

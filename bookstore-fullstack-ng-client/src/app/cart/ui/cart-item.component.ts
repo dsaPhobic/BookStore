@@ -40,6 +40,9 @@ import { NgIf } from "@angular/common";
       <p class="sub">
         {{ cartItem.book.authorNames }} • {{ cartItem.book.publishedYear }}
       </p>
+      <p class="stock-warning" *ngIf="cartItem.quantity > cartItem.book.stockQuantity">
+        Only {{ cartItem.book.stockQuantity }} copies are currently available.
+      </p>
       <span class="chip" *ngIf="cartItem.book.genreNames">
         {{ cartItem.book.genreNames }}
       </span>
@@ -52,6 +55,7 @@ import { NgIf } from "@angular/common";
           [id]="'quantity-' + cartItem.id"
           type="number"
           min="1"
+          [max]="cartItem.book.stockQuantity"
           step="1"
           inputmode="numeric"
           [attr.aria-label]="'Quantity for ' + cartItem.book.title"
@@ -114,6 +118,12 @@ import { NgIf } from "@angular/common";
         font-size: 16px;
         font-weight: 600;
         color: var(--bs-ink-dark);
+      }
+
+      .stock-warning {
+        margin: 0 0 8px;
+        color: #b91c1c;
+        font-size: 13px;
       }
 
       .info-box .sub {

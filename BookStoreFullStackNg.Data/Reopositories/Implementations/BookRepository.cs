@@ -91,6 +91,7 @@ public class BookRepository : IBookRepository
             Language = bookToCreate.Language,
             Format = bookToCreate.Format,
             Publisher = bookToCreate.Publisher,
+            StockQuantity = bookToCreate.StockQuantity,
             Status = string.IsNullOrWhiteSpace(bookToCreate.Status) ? "Active" : bookToCreate.Status,
             CreatedAt = DateTime.UtcNow
         };
@@ -122,6 +123,10 @@ public class BookRepository : IBookRepository
             book.Language = bookToUpdate.Language;
             book.Format = bookToUpdate.Format;
             book.Publisher = bookToUpdate.Publisher;
+            if (bookToUpdate.StockQuantity.HasValue)
+            {
+                book.StockQuantity = bookToUpdate.StockQuantity.Value;
+            }
             book.Status = string.IsNullOrWhiteSpace(bookToUpdate.Status) ? "Active" : bookToUpdate.Status;
 
             _context.Books.Update(book);
@@ -165,6 +170,7 @@ public class BookRepository : IBookRepository
                     ImageUrl = b.ImageUrl,
                     ImagePublicId = b.ImagePublicId,
                     Price = b.Price,
+                    StockQuantity = b.StockQuantity,
                     ISBN = b.ISBN,
                     PageCount = b.PageCount,
                     Language = b.Language,
@@ -216,6 +222,7 @@ public class BookRepository : IBookRepository
                 PublishedYear = book.PublishedYear,
                 ImageUrl = book.ImageUrl,
                 Price = book.Price,
+                StockQuantity = book.StockQuantity,
                 Authors = book.BookAuthors
                     .Select(bookAuthor => new AuthorReadDTO(
                         bookAuthor.Author.Id,
@@ -336,4 +343,3 @@ public class BookRepository : IBookRepository
         }
     }
 }
-

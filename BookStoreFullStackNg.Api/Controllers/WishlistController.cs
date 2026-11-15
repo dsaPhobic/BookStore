@@ -93,6 +93,7 @@ public class WishlistController : ControllerBase
                 Title = item.Book.Title,
                 Description = item.Book.Description,
                 Price = item.Book.Price,
+                StockQuantity = item.Book.StockQuantity,
                 PublishedYear = item.Book.PublishedYear,
                 ImageUrl = item.Book.ImageUrl,
                 Authors = item.Book.BookAuthors

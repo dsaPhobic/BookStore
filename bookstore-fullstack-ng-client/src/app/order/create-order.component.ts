@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
+import { ChangeDetectionStrategy, Component, inject, signal } from "@angular/core";
 import { CreateOrderFormComponent } from "./ui/create-order-form.component";
 import { OrderCreateModel } from "./data/order-create.model";
 import { OrderService } from "./data/order.service";
@@ -9,6 +9,7 @@ import { CartActions } from "../cart/state/cart.actions";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
 import { DemoNetBankingOrderModel } from "./data/demo-netbanking-order.model";
+import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: "app-create-order",
@@ -44,6 +45,7 @@ import { DemoNetBankingOrderModel } from "./data/demo-netbanking-order.model";
       <app-create-order-form
         [paymentMethods]="(paymentMethods$ | async) ?? []"
         [shippingRates]="(shippingRates$ | async) ?? []"
+        [checkoutError]="checkoutError()"
         (onOrderSubmit)="handleOrderSubmit($event)"
       />
     </div>
@@ -67,8 +69,10 @@ export class CreateOrderComponent {
   private store = inject(Store);
   paymentMethods$ = this.orderService.getPaymentMethods();
   shippingRates$ = this.orderService.getShippingRates();
+  checkoutError = signal<string | null>(null);
 
   handleOrderSubmit(orderToCreate: OrderCreateModel) {
+    this.checkoutError.set(null);
     this.orderService.createOrder(orderToCreate).subscribe({
       next: (demoNetBankingOrder: DemoNetBankingOrderModel | null) => {
         this.store.dispatch(CartActions.emptyCartItemState());
@@ -82,8 +86,11 @@ export class CreateOrderComponent {
 
         this.router.navigate(["/order-success"]);
       },
-      error: () => {
-        this.router.navigate(["/order-failure"]);
+      error: (error: HttpErrorResponse) => {
+        this.checkoutError.set(
+          error.error?.message ??
+            "The order could not be placed. Please review your cart and try again."
+        );
       },
     });
   }

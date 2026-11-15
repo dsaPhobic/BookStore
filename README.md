@@ -43,10 +43,18 @@ An admin can create a coupon with `POST /api/coupons`, for example:
 
 Signed-in users can preview it against their cart with `POST /api/coupons/apply` and body `{ "code": "SAVE10" }`. The checkout request includes the applied `couponCode`; the API checks validity and usage limits again before creating the order.
 
+### Book inventory
+
+Apply the bookstore migration from the repository root before using inventory:
+
+```powershell
+dotnet ef database update --project BookStoreFullStackNg.Data\BookStoreFullStackNg.Data.csproj --startup-project BookStoreFullStackNg.Api\BookStoreFullStackNg.Api.csproj --context BookStoreContext
+```
+
+Existing books start with zero stock and must be initialized by an admin in the book editor before customers can purchase them. Cart updates check availability, and checkout reserves stock atomically. Cancelling an order restores its reserved quantities once.
+
 ### Real-time order notifications
 
 The API exposes a SignalR hub at `/hubs/notifications`. Customers connect with their JWT (sent as the `access_token` query string value, which is how browser WebSocket handshakes authenticate). When an admin changes an order status with `PUT /api/orders/{id}/status`, the API sends an `OrderStatusChanged` event to that order's owner only.
 
 The Angular client keeps the connection open while a session is active, shows the update as a toast, adds it to the notification bell in the header, and refreshes the "My Orders" list when that page is open.
-
-

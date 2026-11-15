@@ -41,6 +41,9 @@ import { ShippingRateModel } from "../data/shipping-rate.model";
   ],
   template: `
     <div class="checkout-card surface-card">
+      <p class="checkout-error" *ngIf="checkoutError" role="alert">
+        {{ checkoutError }}
+      </p>
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
           <mat-icon matPrefix>person_outline</mat-icon>
@@ -251,6 +254,11 @@ import { ShippingRateModel } from "../data/shipping-rate.model";
         color: var(--bs-danger, #b42318);
       }
 
+      .checkout-error {
+        margin: 0 0 16px;
+        color: var(--bs-danger, #b42318);
+      }
+
       .shipping-preview {
         display: flex;
         justify-content: space-between;
@@ -284,6 +292,7 @@ import { ShippingRateModel } from "../data/shipping-rate.model";
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateOrderFormComponent implements OnInit {
+  @Input() checkoutError: string | null = null;
   @Input({ required: true }) paymentMethods!: ReadonlyArray<PaymentMethodModel>;
   @Input({ required: true }) shippingRates!: ReadonlyArray<ShippingRateModel>;
   @Output() onOrderSubmit = new EventEmitter<OrderCreateModel>();

@@ -22,6 +22,8 @@ public class Order
     public User User { get; set; } = null!;
     public DateTime OrderDate { get; set; }
     public OrderStatus OrderStatus { get; set; }
+    public DateTime? StockReservedAt { get; set; }
+    public DateTime? StockRestoredAt { get; set; }
     public Payment Payment { get; set; } = null!;
     public ICollection<OrderItem> OrderItems { get; set; } = [];
 }

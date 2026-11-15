@@ -110,6 +110,11 @@ import { getImageUrl } from "../../utils/image.utils";
           <input type="number" matInput formControlName="price" />
         </mat-form-field>
 
+        <mat-form-field appearance="fill">
+          <mat-label>Stock quantity *</mat-label>
+          <input type="number" min="0" step="1" matInput formControlName="stockQuantity" />
+        </mat-form-field>
+
         <!-- Published Year -->
         <mat-form-field appearance="fill">
           <mat-label>Published Year *</mat-label>
@@ -386,6 +391,11 @@ export class BookDialogComponent {
     title: new FormControl<string>("", Validators.required),
     description: new FormControl<string>("", Validators.required),
     price: new FormControl<number>(0, [Validators.required, Validators.min(0)]),
+    stockQuantity: new FormControl<number>(0, [
+      Validators.required,
+      Validators.min(0),
+      Validators.pattern(/^\d+$/),
+    ]),
     publishedYear: new FormControl<number>(new Date().getFullYear(), Validators.required),
     isbn: new FormControl<string>(""),
     pageCount: new FormControl<number | null>(null),
@@ -531,6 +541,7 @@ export class BookDialogComponent {
         title: b.title,
         description: b.description,
         price: b.price,
+        stockQuantity: b.stockQuantity,
         publishedYear: b.publishedYear,
         isbn: b.isbn || "",
         pageCount: b.pageCount || null,
