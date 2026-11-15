@@ -19,7 +19,7 @@ public class OrderRepository : IOrderRepository
         _context = context;
         _sortHelper = sortHelper;
     }
-    public async Task CreateOrder(int userId, OrderCreateDto orderToCreate)
+    public async Task<Order> CreateOrder(int userId, OrderCreateDto orderToCreate)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -51,6 +51,8 @@ public class OrderRepository : IOrderRepository
                 Name = orderToCreate.Name,
                 Email = orderToCreate.Email,
                 MobileNumber = orderToCreate.MobileNumber,
+                ShippingAddress = orderToCreate.ShippingAddress.Trim(),
+                ShippingFee = ShippingPricing.GetFee(orderToCreate.ShippingZone),
                 OrderDate = DateTime.UtcNow,
                 TaxInPercent = Tax.TaxInPercent,
                 DiscountPercent = discountPercent,
@@ -108,10 +110,15 @@ public class OrderRepository : IOrderRepository
             var payment = new Payment
             {
                 OrderId = order.Id,
-                Amount = pricing.Total,
+                Amount = Math.Round(
+                    pricing.Total + order.ShippingFee,
+                    2,
+                    MidpointRounding.AwayFromZero),
                 Status = PaymentStatus.Pending,
-                Method = (PaymentMethod)orderToCreate.PaymentMethod
+                Method = (PaymentMethod)orderToCreate.PaymentMethod,
+                Order = order
             };
+            order.Payment = payment;
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
@@ -124,12 +131,41 @@ public class OrderRepository : IOrderRepository
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
+            return order;
         }
         catch
         {
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<bool> CompleteDemoNetBankingPayment(int orderId, int userId)
+    {
+        var payment = await _context.Payments
+            .Include(item => item.Order)
+            .SingleOrDefaultAsync(item =>
+                item.OrderId == orderId && item.Order.UserId == userId);
+
+        if (payment == null || payment.Method != PaymentMethod.NetBanking)
+        {
+            return false;
+        }
+
+        if (payment.Status == PaymentStatus.Completed)
+        {
+            return true;
+        }
+
+        if (payment.Status != PaymentStatus.Pending)
+        {
+            return false;
+        }
+
+        payment.Status = PaymentStatus.Completed;
+        payment.PaymentDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<PagedList<Order>> UserOrder(int userId, UserOrdersQueryParameters queryParameters)
@@ -238,6 +274,7 @@ public class OrderRepository : IOrderRepository
     {
         return await _context.Orders
                                 .AsNoTracking()
+                                .Include(order => order.Payment)
                                 .Include(c => c.OrderItems)
                                 .ThenInclude(c => c.Book)
                                 .ThenInclude(b => b.BookGenres)

@@ -3,6 +3,7 @@ using BookStoreFullStackNg.Data.Domain;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,7 +18,19 @@ public static class AuthSeeder
             using var scope = app.ApplicationServices.CreateScope();
             var authContext = scope.ServiceProvider.GetService<AuthContext>();
 
-            if (authContext!.Database.GetPendingMigrations().Any())
+            var config = scope.ServiceProvider.GetService<IConfiguration>();
+            var provider = config?.GetValue<string>("DatabaseSettings:Provider") ?? "Sqlite";
+            var pgConn = config?.GetConnectionString("PostgreSqlConnection")
+                ?? config?.GetValue<string>("DatabaseSettings:PostgreSql:ConnectionString");
+            bool usePostgreSql = provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(pgConn)
+                && !pgConn.Contains("[YOUR_PASSWORD]");
+
+            if (usePostgreSql)
+            {
+                await authContext!.Database.EnsureCreatedAsync();
+            }
+            else if (authContext!.Database.GetPendingMigrations().Any())
             {
                 await authContext.Database.MigrateAsync();
             }
@@ -59,7 +72,11 @@ public static class AuthSeeder
                 return;
             }
 
-            if (bookContext.Database.GetPendingMigrations().Any())
+            if (usePostgreSql)
+            {
+                await bookContext.Database.EnsureCreatedAsync();
+            }
+            else if (bookContext.Database.GetPendingMigrations().Any())
             {
                 await bookContext.Database.MigrateAsync();
             }
@@ -189,6 +206,18 @@ public static class AuthSeeder
             await bookContext.BookAuthors.AddRangeAsync(bookAuthors);
             await bookContext.BookGenres.AddRangeAsync(bookGenres);
             await bookContext.SaveChangesAsync();
+
+            if (!await bookContext.Coupons.AnyAsync())
+            {
+                var coupons = new List<Coupon>
+                {
+                    new() { Code = "WELCOME10", DiscountPercent = 10, MaxDiscount = 20, IsActive = true, ExpiryDate = DateTime.UtcNow.AddYears(2), MaxUsageCount = 500, UsageCount = 0 },
+                    new() { Code = "BOOKWORM20", DiscountPercent = 20, MaxDiscount = 50, IsActive = true, ExpiryDate = DateTime.UtcNow.AddYears(2), MaxUsageCount = 200, UsageCount = 0 },
+                    new() { Code = "STUDENT15", DiscountPercent = 15, MaxDiscount = 30, IsActive = true, ExpiryDate = DateTime.UtcNow.AddYears(2), MaxUsageCount = 300, UsageCount = 0 }
+                };
+                await bookContext.Coupons.AddRangeAsync(coupons);
+                await bookContext.SaveChangesAsync();
+            }
         }
         catch (Exception)
         {

@@ -25,6 +25,7 @@ import { AuthorDialogComponent } from "./ui/author-dialog.component";
 import { AuthorBooksDialogComponent } from "./ui/author-books-dialog.component";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
+import { ConfirmationService } from "../common/confirmation.service";
 
 @Component({
   selector: "app-author",
@@ -95,6 +96,7 @@ import { MatIconModule } from "@angular/material/icon";
 })
 export class AuthorComponent implements OnDestroy {
   dialog = inject(MatDialog);
+  private readonly confirmation = inject(ConfirmationService);
   destroyed$ = new Subject<boolean>();
   store = inject(Store);
   authors$: Observable<readonly Author[]> = this.store.select(selectAuthors);
@@ -138,14 +140,18 @@ export class AuthorComponent implements OnDestroy {
   }
 
   onDelete(author: Author) {
-    if (
-      window.confirm(
-        `Are you sure you want to delete the author "${author.authorName}"?`
-      )
-    ) {
-      this.store.dispatch(authorActions.deleteAuthor({ id: author.id }));
-      this.loadAuthors();
-    }
+    this.confirmation
+      .confirm({
+        title: "Delete author?",
+        message: `Are you sure you want to delete the author "${author.authorName}"?`,
+        confirmText: "Delete author",
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(authorActions.deleteAuthor({ id: author.id }));
+          this.loadAuthors();
+        }
+      });
   }
 
   onPageSelect(page: PageSelectorModel) {

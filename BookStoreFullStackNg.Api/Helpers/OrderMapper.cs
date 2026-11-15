@@ -20,10 +20,10 @@ public static class OrderMapper
                 order.DiscountPercent,
                 order.DiscountAmount > 0 ? order.DiscountAmount : null);
             var total = order.Payment?.Amount
-                ?? pricing.Total;
+                ?? Math.Round(pricing.Total + order.ShippingFee, 2, MidpointRounding.AwayFromZero);
             var paidLineTotals = OrderPricing.AllocatePaidLineTotals(
                 order.OrderItems.Select(item => item.Price * item.Quantity).ToArray(),
-                total);
+                total - order.ShippingFee);
 
             return new UserOrderDto
             {
@@ -31,6 +31,8 @@ public static class OrderMapper
                 Name = order.Name,
                 Email = order.Email,
                 MobileNumber = order.MobileNumber,
+                ShippingAddress = order.ShippingAddress,
+                ShippingFee = order.ShippingFee,
                 OrderDate = order.OrderDate,
                 OrderStatus = order.OrderStatus,
                 DiscountPercent = order.DiscountPercent,

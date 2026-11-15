@@ -531,5 +531,9 @@ Logs/
 # Local implementation plan (do not commit/push)
 /MEMBER2_IMPLEMENTATION_PLAN.md
 
+# Uploaded media (keep .gitkeep only)
+BookStoreFullStackNg.Api/Uploads/*
+!BookStoreFullStackNg.Api/Uploads/.gitkeep
+
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Angular

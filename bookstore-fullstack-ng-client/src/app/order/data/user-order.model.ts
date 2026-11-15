@@ -5,6 +5,8 @@ export interface UserOrderModel {
   email: string;
   name: string;
   mobileNumber: string;
+  shippingAddress: string;
+  shippingFee: number;
   orderDate: string;
   orderStatus: number;
   subTotal: number;

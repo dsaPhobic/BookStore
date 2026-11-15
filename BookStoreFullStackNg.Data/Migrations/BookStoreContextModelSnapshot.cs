@@ -293,6 +293,14 @@ namespace BookStoreFullStackNg.Data.Migrations
                     b.Property<int>("OrderStatus")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ShippingAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("ShippingFee")
+                        .HasColumnType("REAL");
+
                     b.Property<double>("TaxInPercent")
                         .HasColumnType("REAL");
 

@@ -4,7 +4,7 @@
 
 - .Net core 8 (APIs)
 - Entity Framework Core (ORM)
-- Sqlite (Database)
+- PostgreSQL (Supabase Cloud Database) & Sqlite (Local fallback)
 - xUnit for unit and integration tests
 - Angular 18 (client side)
 - Ngrx for state management
@@ -49,32 +49,4 @@ The API exposes a SignalR hub at `/hubs/notifications`. Customers connect with t
 
 The Angular client keeps the connection open while a session is active, shows the update as a toast, adds it to the notification bell in the header, and refreshes the "My Orders" list when that page is open.
 
-## Screenshots
 
-![1](./screenshots/1.jpg)
-
-![2](./screenshots/2.jpg)
-
-![3](./screenshots/3.jpg)
-
-![4](./screenshots/4.jpg)
-
-![5](./screenshots/5.jpg)
-
-![6](./screenshots/6.jpg)
-
-![7](./screenshots/7.jpg)
-
-![8](./screenshots/8.jpg)
-
-![9](./screenshots/9.jpg)
-
-![10](./screenshots/10.jpg)
-
-![11](./screenshots/11.jpg)
-
-![12](./screenshots/12.jpg)
-
-![13](./screenshots/13.jpg)
-
-![14](./screenshots/14.jpg)

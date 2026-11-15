@@ -29,9 +29,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.RegisterDataServices();
 builder.Services.Configure<BookStoreFullStackNg.Data.Services.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
-builder.Services.AddDbContext<BookStoreContext>(options => options.UseSqlite("Data source= BookStore.db"));
-
-builder.Services.AddDbContext<AuthContext>(options => options.UseSqlite("Data source= Auth.db"));
+builder.Services.AddConfiguredDatabase(builder.Configuration);
 
 // Real-time notifications for signed-in customers
 builder.Services.AddSignalR();

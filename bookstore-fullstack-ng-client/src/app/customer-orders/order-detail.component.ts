@@ -92,6 +92,16 @@ import {
               <span class="value">{{ order.tax | currency : "USD" }}</span>
             </div>
             <div class="summary-item">
+              <span class="label">Shipping fee</span>
+              <span class="value">{{
+                order.shippingFee | currency : "USD"
+              }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Delivery address</span>
+              <span class="value">{{ order.shippingAddress }}</span>
+            </div>
+            <div class="summary-item">
               <span class="label">Total</span>
               <span class="value total">{{
                 order.total | currency : "USD"
