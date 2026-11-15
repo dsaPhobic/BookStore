@@ -15,7 +15,6 @@ import { tokenUtils } from "./utils/token.utils";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { CartActions } from "./cart/state/cart.actions";
 import { selectCartCount } from "./cart/state/cart.selectors";
-import { tokenUtils } from "./utils/token.utils";
 
 @Component({
   selector: "app-root",
