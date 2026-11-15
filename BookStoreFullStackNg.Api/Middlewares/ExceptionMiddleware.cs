@@ -40,6 +40,7 @@ public class ExceptionMiddleware : IMiddleware
                 break;
             case BadRequestException _:
             case CouponValidationException _:
+            case InvalidOperationException _:
                 statusCode = StatusCodes.Status400BadRequest;
                 break;
             default:

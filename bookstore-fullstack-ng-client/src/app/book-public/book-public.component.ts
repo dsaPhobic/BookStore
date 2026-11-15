@@ -79,11 +79,10 @@ const ALLOWED_SORTS = new Set([
   template: `
     <div class="page-header">
       <div>
-        <span class="eyebrow">STOREFRONT CATALOG</span>
-        <h1>Explore All Books</h1>
+        <span class="eyebrow">LIBRARY CATALOG</span>
+        <h1>Explore All Titles</h1>
         <p class="page-subtitle">
-          Browse titles across software engineering, science, business, and
-          classic literature.
+          Handpicked literature, engineering, architecture, and sciences.
         </p>
       </div>
     </div>

@@ -47,21 +47,7 @@ public class GoogleBooksService : IIsbnLookupService
             _logger.LogWarning(ex, "Google Books API failed for ISBN {ISBN}. Falling back to Open Library.", cleanedIsbn);
         }
 
-        // 2. Fallback to Open Library /isbn/{isbn}.json
-        try
-        {
-            var olResult = await TryOpenLibraryAsync(cleanedIsbn);
-            if (olResult != null && olResult.Found)
-            {
-                return olResult;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Open Library ISBN endpoint failed for ISBN {ISBN}.", cleanedIsbn);
-        }
-
-        // 3. Fallback to Open Library bibkeys data API
+        // 2. Try Open Library bibkeys data API (includes author names & large covers)
         try
         {
             var olDataResult = await TryOpenLibraryDataApiAsync(cleanedIsbn);
@@ -73,6 +59,20 @@ public class GoogleBooksService : IIsbnLookupService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Open Library data API failed for ISBN {ISBN}.", cleanedIsbn);
+        }
+
+        // 3. Fallback to Open Library /isbn/{isbn}.json
+        try
+        {
+            var olResult = await TryOpenLibraryAsync(cleanedIsbn);
+            if (olResult != null && olResult.Found)
+            {
+                return olResult;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Open Library ISBN endpoint failed for ISBN {ISBN}.", cleanedIsbn);
         }
 
         return new IsbnLookupResultDto { Found = false, ISBN = cleanedIsbn };

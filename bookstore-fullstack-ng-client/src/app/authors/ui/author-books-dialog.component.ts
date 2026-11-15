@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from "@angular/common";
 import { Author } from "../data/author.model";
 import { AuthorService } from "../data/author.service";
+import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
   selector: "app-author-books-dialog",
@@ -67,7 +68,7 @@ import { AuthorService } from "../data/author.service";
           <td mat-cell *matCellDef="let book">
             <img
               *ngIf="book.imageUrl"
-              [src]="book.imageUrl"
+              [src]="getImageUrl(book.imageUrl)"
               alt="Bìa"
               class="book-thumb"
             />
@@ -197,6 +198,10 @@ export class AuthorBooksDialogComponent implements OnInit {
   totalCount = signal(0);
 
   columns = ["Image", "Title", "Year", "Price", "Status"];
+
+  getImageUrl(url?: string | null): string {
+    return getImageUrl(url);
+  }
 
   constructor(
     public dialogRef: MatDialogRef<AuthorBooksDialogComponent>,

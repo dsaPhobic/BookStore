@@ -14,6 +14,7 @@ import { MatTableModule } from "@angular/material/table";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { environment } from "../../../environments/environment.development";
 import { CurrencyPipe, NgIf } from "@angular/common";
+import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
   selector: "app-book-list",
@@ -266,11 +267,7 @@ export class BookListComponent {
   ];
 
   getImageUrl(imageUrl?: string | null): string {
-    if (!imageUrl) return "";
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-      return imageUrl;
-    }
-    return this.imageBaseUrl + imageUrl;
+    return getImageUrl(imageUrl);
   }
 
   sortData(sortData: Sort) {

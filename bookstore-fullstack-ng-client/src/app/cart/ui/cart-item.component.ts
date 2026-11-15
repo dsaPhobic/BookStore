@@ -11,6 +11,7 @@ import { FormControl, ReactiveFormsModule } from "@angular/forms";
 import { tap } from "rxjs";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { environment } from "../../../environments/environment.development";
+import { getImageUrl } from "../../utils/image.utils";
 import { MatInputModule } from "@angular/material/input";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSelectModule } from "@angular/material/select";
@@ -35,7 +36,7 @@ import { NgFor, NgIf } from "@angular/common";
     <div class="cover-box">
       <img
         *ngIf="cartItem.book.imageUrl; else fallbackIcon"
-        [src]="imageBaseUrl + cartItem.book.imageUrl"
+        [src]="getImageUrl(cartItem.book.imageUrl)"
         [alt]="cartItem.book.title"
       />
       <ng-template #fallbackIcon>
@@ -138,8 +139,10 @@ import { NgFor, NgIf } from "@angular/common";
       }
 
       .price-box .line-total {
-        font-size: 17px;
-        color: var(--bs-ink-dark);
+        font-family: var(--bs-font-mono);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--bs-ink);
       }
 
       @media (max-width: 640px) {
@@ -157,6 +160,10 @@ import { NgFor, NgIf } from "@angular/common";
 export class CartItemComponent implements OnInit {
   imageBaseUrl = environment.baseUrl + "/resources/";
   @Input({ required: true }) cartItem!: CartItem;
+
+  getImageUrl(url?: string | null): string {
+    return getImageUrl(url);
+  }
   @Output() deleteItem = new EventEmitter<number>();
   @Output() selectQuantity = new EventEmitter<{
     cartItem: CartItem;

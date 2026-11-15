@@ -12,11 +12,11 @@ import { MatIconModule } from "@angular/material/icon";
         <div class="footer-brand">
           <div class="brand-row">
             <span class="brand-mark"><mat-icon>auto_stories</mat-icon></span>
-            <span class="brand-name">Book<span>Store</span></span>
+            <span class="brand-name">BOOK<span class="accent-dot">.</span>STORE</span>
           </div>
           <p class="tagline">
-            Curated books on software engineering, architecture, science, and
-            timeless literature delivered to your doorstep.
+            A curated sanctuary of literature, system design, and timeless science. 
+            Printed with care and delivered nationwide.
           </p>
         </div>
 
@@ -56,9 +56,10 @@ import { MatIconModule } from "@angular/material/icon";
       }
 
       .site-footer {
-        background: var(--bs-ink-dark);
-        color: rgba(255, 255, 255, 0.78);
-        padding: 48px 24px 24px;
+        background: var(--bs-ink);
+        color: rgba(255, 255, 255, 0.75);
+        padding: 56px 24px 28px;
+        border-top: 1px solid var(--bs-border);
       }
 
       .footer-inner {
@@ -66,9 +67,9 @@ import { MatIconModule } from "@angular/material/icon";
         margin: 0 auto;
         display: grid;
         grid-template-columns: 1.6fr repeat(3, 1fr);
-        gap: 32px;
-        padding-bottom: 32px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        gap: 40px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .brand-row {
@@ -79,23 +80,24 @@ import { MatIconModule } from "@angular/material/icon";
       }
 
       .brand-mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--bs-radius-sm);
         display: grid;
         place-items: center;
-        background: var(--bs-accent);
-        color: #fff;
+        background: #ffffff;
+        color: var(--bs-ink);
       }
 
       .brand-name {
-        font-family: var(--bs-font-heading);
-        font-size: 20px;
-        font-weight: 700;
+        font-family: var(--bs-font-sans);
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
         color: #fff;
       }
 
-      .brand-name span {
+      .brand-name .accent-dot {
         color: var(--bs-accent);
       }
 
@@ -103,28 +105,29 @@ import { MatIconModule } from "@angular/material/icon";
         margin: 0;
         font-size: 14px;
         line-height: 1.6;
-        color: rgba(255, 255, 255, 0.65);
+        color: rgba(255, 255, 255, 0.6);
         max-width: 340px;
       }
 
       .footer-col {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
       }
 
       .footer-col h4 {
         margin: 0 0 6px;
-        font-size: 13px;
+        font-size: 12px;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
         color: #fff;
       }
 
       .footer-col a,
       .footer-col span {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.68);
+        font-size: 13.5px;
+        color: rgba(255, 255, 255, 0.65);
         text-decoration: none;
         transition: color 0.15s ease;
       }
@@ -135,13 +138,13 @@ import { MatIconModule } from "@angular/material/icon";
 
       .footer-bottom {
         max-width: var(--bs-container);
-        margin: 20px auto 0;
+        margin: 24px auto 0;
         display: flex;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 12px;
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.5);
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.45);
       }
 
       @media (max-width: 820px) {

@@ -104,6 +104,94 @@ public class CloudinaryService : ICloudinaryService
         };
     }
 
+    public async Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl, string folder, int? width = null, int? height = null)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            throw new ArgumentException("Image URL cannot be empty.", nameof(imageUrl));
+        }
+
+        // 1. If Cloudinary is configured, upload the remote URL directly to Cloudinary
+        if (_cloudinary != null)
+        {
+            try
+            {
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(imageUrl),
+                    Folder = folder,
+                    Transformation = width.HasValue && height.HasValue
+                        ? new Transformation().Width(width.Value).Height(height.Value).Crop("fill").Gravity("auto").FetchFormat("auto").Quality("auto")
+                        : new Transformation().FetchFormat("auto").Quality("auto")
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.Error != null)
+                {
+                    _logger.LogError("Cloudinary upload from URL failed: {Error}. Preserving original URL.", uploadResult.Error.Message);
+                    return new CloudinaryUploadResult
+                    {
+                        Url = imageUrl,
+                        PublicId = string.Empty
+                    };
+                }
+
+                _logger.LogInformation("Successfully uploaded image from URL to Cloudinary: {PublicId}", uploadResult.PublicId);
+                return new CloudinaryUploadResult
+                {
+                    Url = uploadResult.SecureUrl?.ToString() ?? uploadResult.Url?.ToString() ?? imageUrl,
+                    PublicId = uploadResult.PublicId
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Exception while uploading remote image {Url} to Cloudinary. Falling back to original URL.", imageUrl);
+                return new CloudinaryUploadResult
+                {
+                    Url = imageUrl,
+                    PublicId = string.Empty
+                };
+            }
+        }
+
+        // 2. Fallback to local storage if Cloudinary is not configured
+        try
+        {
+            using var client = new HttpClient();
+            using var response = await client.GetAsync(imageUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var contentPath = _environment.ContentRootPath;
+                var uploadDir = Path.Combine(contentPath, "Uploads", folder);
+                if (!Directory.Exists(uploadDir))
+                {
+                    Directory.CreateDirectory(uploadDir);
+                }
+
+                var uniqueFileName = $"{Guid.NewGuid():N}.jpg";
+                var fullPath = Path.Combine(uploadDir, uniqueFileName);
+                await using var localStream = new FileStream(fullPath, FileMode.Create);
+                await response.Content.CopyToAsync(localStream);
+
+                return new CloudinaryUploadResult
+                {
+                    Url = $"/Uploads/{folder}/{uniqueFileName}",
+                    PublicId = $"local_{uniqueFileName}"
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to download image from {Url} for local storage fallback", imageUrl);
+        }
+
+        return new CloudinaryUploadResult
+        {
+            Url = imageUrl,
+            PublicId = string.Empty
+        };
+    }
+
     public async Task<bool> DeleteImageAsync(string publicId)
     {
         if (string.IsNullOrWhiteSpace(publicId))

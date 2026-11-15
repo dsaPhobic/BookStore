@@ -28,6 +28,7 @@ import { environment } from "../../environments/environment";
 import { selectLoginState } from "../account/state/account.selectors";
 import { BookReadModel } from "../book/Data/book-read.model";
 import { CartCreateModel } from "../cart/data/cart-create.model";
+import { getImageUrl } from "../utils/image.utils";
 import { CartActions } from "../cart/state/cart.actions";
 import { PublicBookService } from "./data/public-book.service";
 import { BookListPublicComponent } from "./ui/book-list-public.component";
@@ -91,7 +92,7 @@ interface BookDetailResult {
         <div class="cover-panel">
           <img
             *ngIf="currentBook.imageUrl; else noCover"
-            [src]="imageBaseUrl + currentBook.imageUrl"
+            [src]="getImageUrl(currentBook.imageUrl)"
             [alt]="currentBook.title"
             class="detail-cover"
           />
@@ -138,14 +139,13 @@ interface BookDetailResult {
           <div class="action-row">
             <button
               mat-flat-button
-              color="accent"
               (click)="addToCart(currentBook)"
               class="buy-btn"
             >
               <mat-icon>shopping_bag</mat-icon>
               Add to Shopping Cart
             </button>
-            <a mat-stroked-button routerLink="/cart">View Cart</a>
+            <a mat-stroked-button routerLink="/cart" class="view-cart-btn">View Cart</a>
           </div>
         </div>
       </div>
@@ -296,27 +296,33 @@ interface BookDetailResult {
       }
 
       .price-label {
-        font-size: 13px;
+        font-size: 12px;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
         color: var(--bs-muted);
       }
 
       .detail-price {
-        font-size: 30px;
+        font-family: var(--bs-font-mono);
+        font-size: 28px;
         font-weight: 700;
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
+        letter-spacing: -0.02em;
       }
 
       .desc-section h3 {
-        font-size: 18px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--bs-ink);
         margin: 0 0 8px;
       }
 
       .desc-section p {
         margin: 0 0 28px;
         line-height: 1.7;
-        color: var(--bs-text);
+        color: #334155;
+        max-width: 68ch;
       }
 
       .action-row {
@@ -326,8 +332,24 @@ interface BookDetailResult {
       }
 
       .buy-btn {
+        background: var(--bs-ink) !important;
+        color: #ffffff !important;
         height: 46px !important;
-        padding: 0 26px !important;
+        padding: 0 24px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        border-radius: var(--bs-radius-sm) !important;
+        transition: background 0.15s ease;
+      }
+
+      .buy-btn:hover {
+        background: #1e293b !important;
+      }
+
+      .view-cart-btn {
+        height: 46px !important;
+        padding: 0 22px !important;
+        border-radius: var(--bs-radius-sm) !important;
       }
 
       .related-section {
@@ -372,6 +394,10 @@ export class BookDetailComponent {
 
   readonly imageBaseUrl = `${environment.baseUrl}/resources/`;
   readonly status = signal<DetailStatus>("loading");
+
+  getImageUrl(url?: string | null): string {
+    return getImageUrl(url);
+  }
   readonly book = signal<BookReadModel | null>(null);
   readonly relatedBooks = signal<ReadonlyArray<BookReadModel>>([]);
   readonly errorMessage = signal("");

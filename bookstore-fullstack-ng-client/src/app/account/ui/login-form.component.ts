@@ -124,8 +124,9 @@ export class LoginFormComponet {
 
   onSubmit(event: Event) {
     event.stopPropagation();
-    this.submit.emit(this.loginForm.value);
-    this.loginForm.reset();
+    if (this.loginForm.valid) {
+      this.submit.emit(this.loginForm.value);
+    }
   }
 
   resetLoginForm() {

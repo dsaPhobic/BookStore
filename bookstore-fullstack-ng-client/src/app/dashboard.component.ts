@@ -276,10 +276,11 @@ interface DashboardState {
   styles: [
     `
       .welcome-banner {
-        background: linear-gradient(135deg, #1a234d 0%, #29356a 100%);
+        background: #090d16;
         color: #fff;
-        padding: 32px;
-        border-radius: var(--bs-radius-lg);
+        padding: 32px 36px;
+        border-radius: var(--bs-radius);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -289,18 +290,22 @@ interface DashboardState {
       }
 
       .welcome-banner .eyebrow {
-        color: #ffb19c;
+        color: #94a3b8;
       }
 
       .welcome-banner h1 {
+        font-family: var(--bs-font-sans);
+        font-weight: 700;
         color: #fff;
         margin: 6px 0 8px;
-        font-size: 30px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
       }
 
       .welcome-banner p {
         margin: 0;
-        color: rgba(255, 255, 255, 0.78);
+        color: #94a3b8;
+        font-size: 14.5px;
       }
 
       .banner-actions {
@@ -309,9 +314,21 @@ interface DashboardState {
         flex-wrap: wrap;
       }
 
+      .welcome-banner a[mat-flat-button] {
+        background: #ffffff !important;
+        color: #090d16 !important;
+        font-weight: 600 !important;
+        border-radius: var(--bs-radius-sm) !important;
+      }
+
       .light-btn {
-        border-color: rgba(255, 255, 255, 0.35) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
         color: #fff !important;
+        border-radius: var(--bs-radius-sm) !important;
+      }
+
+      .light-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
       }
 
       .stats-grid {

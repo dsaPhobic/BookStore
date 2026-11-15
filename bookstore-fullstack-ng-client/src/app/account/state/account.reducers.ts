@@ -26,11 +26,13 @@ export const accountReducers = createReducer(
   on(accountActions.login, (state, { login }) => ({
     ...state,
     loading: true,
+    error: null,
   })),
   on(accountActions.loginSuccess, (state, { token }) => ({
     ...state,
     token,
     loading: false,
+    error: null,
   })),
   on(accountActions.loginFailure, (state, { error }) => ({
     ...state,

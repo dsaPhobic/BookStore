@@ -19,6 +19,7 @@ public class CloudinarySettings
 public interface ICloudinaryService
 {
     Task<CloudinaryUploadResult> UploadImageAsync(IFormFile file, string folder, int? width = null, int? height = null);
+    Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl, string folder, int? width = null, int? height = null);
     Task<bool> DeleteImageAsync(string publicId);
 }
 

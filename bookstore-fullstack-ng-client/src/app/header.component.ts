@@ -34,7 +34,7 @@ import { User } from "./account/data/user.model";
         <!-- Brand -->
         <a class="brand" routerLink="/home">
           <span class="brand-mark"><mat-icon>auto_stories</mat-icon></span>
-          <span class="brand-name">Book<span>Store</span></span>
+          <span class="brand-name">BOOK<span class="accent-dot">.</span>STORE</span>
         </a>
 
         <!-- Primary navigation (desktop) -->
@@ -216,15 +216,15 @@ import { User } from "./account/data/user.model";
       }
 
       .site-header {
-        background: rgba(255, 255, 255, 0.86);
-        backdrop-filter: saturate(180%) blur(12px);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: saturate(180%) blur(16px);
         border-bottom: 1px solid var(--bs-border);
       }
 
       .header-inner {
         max-width: var(--bs-container);
         margin: 0 auto;
-        height: 68px;
+        height: 64px;
         padding: 0 24px;
         display: flex;
         align-items: center;
@@ -239,30 +239,31 @@ import { User } from "./account/data/user.model";
       }
 
       .brand-mark {
-        width: 38px;
-        height: 38px;
-        border-radius: 11px;
+        width: 34px;
+        height: 34px;
+        border-radius: var(--bs-radius-sm);
         display: grid;
         place-items: center;
-        background: linear-gradient(135deg, var(--bs-ink) 0%, #465696 100%);
+        background: var(--bs-ink);
         color: #fff;
-        box-shadow: 0 6px 16px rgba(41, 53, 106, 0.25);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
       }
 
       .brand-mark .mat-icon {
-        font-size: 22px;
-        width: 22px;
-        height: 22px;
+        font-size: 19px;
+        width: 19px;
+        height: 19px;
       }
 
       .brand-name {
-        font-family: var(--bs-font-heading);
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--bs-ink-dark);
+        font-family: var(--bs-font-sans);
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--bs-ink);
       }
 
-      .brand-name span {
+      .brand-name .accent-dot {
         color: var(--bs-accent);
       }
 
@@ -277,13 +278,13 @@ import { User } from "./account/data/user.model";
         display: inline-flex;
         align-items: center;
         gap: 2px;
-        height: 38px;
+        height: 36px;
         padding: 0 14px;
-        border-radius: 10px;
+        border-radius: var(--bs-radius-sm);
         border: none;
         background: transparent;
         font: inherit;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 500;
         color: var(--bs-muted);
         text-decoration: none;
@@ -293,13 +294,14 @@ import { User } from "./account/data/user.model";
 
       .nav-links a:hover,
       .nav-menu-trigger:hover {
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
         background: var(--bs-surface-2);
       }
 
       .nav-links a.active {
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
         background: var(--bs-ink-soft);
+        font-weight: 600;
       }
 
       .nav-menu-trigger .mat-icon {

@@ -67,19 +67,23 @@ import { MatIconModule } from "@angular/material/icon";
       }
 
       .auth-icon {
-        width: 52px;
-        height: 52px;
+        width: 44px;
+        height: 44px;
         margin: 0 auto 14px;
-        border-radius: 14px;
-        background: var(--bs-accent-soft);
-        color: var(--bs-accent);
+        border-radius: var(--bs-radius-sm);
+        background: var(--bs-ink);
+        color: #fff;
         display: grid;
         place-items: center;
       }
 
       .auth-header h1 {
-        font-size: 28px;
+        font-family: var(--bs-font-sans);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--bs-ink);
         margin: 0 0 6px;
+        letter-spacing: -0.02em;
       }
 
       .auth-header p {
@@ -93,7 +97,7 @@ import { MatIconModule } from "@angular/material/icon";
         padding: 10px 14px;
         border-radius: var(--bs-radius-sm);
         background: var(--bs-ink-soft);
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
         font-weight: 500;
         font-size: 13.5px;
       }
@@ -107,8 +111,8 @@ import { MatIconModule } from "@angular/material/icon";
 
       .auth-footer a {
         font-weight: 600;
-        color: var(--bs-accent);
-        text-decoration: none;
+        color: var(--bs-ink);
+        text-decoration: underline;
       }
     `,
   ],

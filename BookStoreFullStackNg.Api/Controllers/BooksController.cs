@@ -1,8 +1,9 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Data.Constants;
+using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Domain;
 using BookStoreFullStackNg.Data.DTOs;
 using BookStoreFullStackNg.Data.DTOs.Author;
@@ -13,6 +14,7 @@ using BookStoreFullStackNg.Data.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BookStoreFullStackNg.Api.Controllers;
@@ -26,18 +28,21 @@ public class BooksController : ControllerBase
     private readonly IBookRepository _bookRepo;
     private readonly ICloudinaryService? _cloudinaryService;
     private readonly IIsbnLookupService? _isbnLookupService;
+    private readonly BookStoreContext? _context;
 
     [ActivatorUtilitiesConstructor]
     public BooksController(
         IMapper mapper,
         IBookRepository bookRepo,
         ICloudinaryService? cloudinaryService = null,
-        IIsbnLookupService? isbnLookupService = null)
+        IIsbnLookupService? isbnLookupService = null,
+        BookStoreContext? context = null)
     {
         _mapper = mapper;
         _bookRepo = bookRepo;
         _cloudinaryService = cloudinaryService;
         _isbnLookupService = isbnLookupService;
+        _context = context;
     }
 
     [HttpPost]
@@ -53,6 +58,15 @@ public class BooksController : ControllerBase
             var uploadResult = await _cloudinaryService.UploadImageAsync(bookCreateDto.ImageFile, "books", 400, 600);
             bookCreateDto.ImageUrl = uploadResult.Url;
             bookCreateDto.ImagePublicId = uploadResult.PublicId;
+        }
+        else if (_cloudinaryService != null && !string.IsNullOrWhiteSpace(bookCreateDto.ImageUrl) && IsRemoteUrl(bookCreateDto.ImageUrl) && !IsCloudinaryUrl(bookCreateDto.ImageUrl))
+        {
+            var uploadResult = await _cloudinaryService.UploadImageFromUrlAsync(bookCreateDto.ImageUrl, "books", 400, 600);
+            if (!string.IsNullOrEmpty(uploadResult.Url))
+            {
+                bookCreateDto.ImageUrl = uploadResult.Url;
+                bookCreateDto.ImagePublicId = uploadResult.PublicId;
+            }
         }
 
         BookReadDto createdBook = await _bookRepo.AddBookAsync(bookCreateDto);
@@ -93,6 +107,19 @@ public class BooksController : ControllerBase
                     await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
                 }
 
+                bookToUpdate.ImageUrl = uploadResult.Url;
+                bookToUpdate.ImagePublicId = uploadResult.PublicId;
+            }
+        }
+        else if (_cloudinaryService != null && !string.IsNullOrWhiteSpace(bookToUpdate.ImageUrl) && IsRemoteUrl(bookToUpdate.ImageUrl) && !IsCloudinaryUrl(bookToUpdate.ImageUrl))
+        {
+            var uploadResult = await _cloudinaryService.UploadImageFromUrlAsync(bookToUpdate.ImageUrl, "books", 400, 600);
+            if (!string.IsNullOrEmpty(uploadResult.Url))
+            {
+                if (!string.IsNullOrEmpty(existingBook.ImagePublicId) && existingBook.ImagePublicId != uploadResult.PublicId)
+                {
+                    await _cloudinaryService.DeleteImageAsync(existingBook.ImagePublicId);
+                }
                 bookToUpdate.ImageUrl = uploadResult.Url;
                 bookToUpdate.ImagePublicId = uploadResult.PublicId;
             }
@@ -254,6 +281,40 @@ public class BooksController : ControllerBase
         }
 
         var result = await _isbnLookupService.LookupByIsbnAsync(isbn);
+        if (result.Found && result.Authors.Count > 0 && _context != null)
+        {
+            foreach (var authorName in result.Authors)
+            {
+                if (string.IsNullOrWhiteSpace(authorName)) continue;
+                var trimmed = authorName.Trim();
+                var existingAuthor = await _context.Authors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == trimmed.ToLower());
+                if (existingAuthor == null)
+                {
+                    existingAuthor = new Author { AuthorName = trimmed };
+                    _context.Authors.Add(existingAuthor);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (!result.AuthorIds.Contains(existingAuthor.Id))
+                {
+                    result.AuthorIds.Add(existingAuthor.Id);
+                    result.MatchedAuthors.Add(new AuthorLookupMatchDto
+                    {
+                        Id = existingAuthor.Id,
+                        AuthorName = existingAuthor.AuthorName
+                    });
+                }
+            }
+        }
         return Ok(result);
     }
+
+    private static bool IsRemoteUrl(string? url) =>
+        !string.IsNullOrWhiteSpace(url) &&
+        (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+         url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsCloudinaryUrl(string? url) =>
+        !string.IsNullOrWhiteSpace(url) &&
+        url.Contains("res.cloudinary.com", StringComparison.OrdinalIgnoreCase);
 }

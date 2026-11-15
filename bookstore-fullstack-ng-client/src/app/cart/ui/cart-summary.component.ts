@@ -34,7 +34,6 @@ import { RouterModule } from "@angular/router";
 
     <a
       mat-flat-button
-      color="accent"
       routerLink="/create-order"
       class="checkout-btn"
     >
@@ -59,45 +58,60 @@ import { RouterModule } from "@angular/router";
 
       .summary-title {
         margin: 0 0 4px;
-        font-size: 20px;
+        font-family: var(--bs-font-sans);
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--bs-ink);
       }
 
       .summary-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 15px;
+        font-size: 14px;
         color: var(--bs-muted);
       }
 
       .summary-row strong {
-        color: var(--bs-ink-dark);
+        font-family: var(--bs-font-mono);
+        color: var(--bs-ink);
       }
 
       .free {
         color: var(--bs-success) !important;
+        font-family: var(--bs-font-sans) !important;
+        font-weight: 600;
       }
 
       .summary-divider {
         height: 1px;
         background: var(--bs-border);
-        margin: 4px 0;
+        margin: 6px 0;
       }
 
       .total-row {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
       }
 
       .total-row strong {
+        font-family: var(--bs-font-mono);
         font-size: 22px;
       }
 
       .checkout-btn {
         width: 100%;
         height: 46px !important;
-        margin-top: 6px;
+        margin-top: 8px;
+        background: var(--bs-ink) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        border-radius: var(--bs-radius-sm) !important;
+      }
+
+      .checkout-btn:hover {
+        background: #1e293b !important;
       }
     `,
   ],

@@ -33,6 +33,7 @@ import { AsyncPipe, NgIf } from "@angular/common";
 import { environment } from "../../../environments/environment.development";
 import { BookReadModel } from "../Data/book-read.model";
 import { BookService } from "../Data/book.service";
+import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
   selector: "app-book-dialog",
@@ -163,7 +164,7 @@ import { BookService } from "../Data/book.service";
         <div class="col-span-1-5">
           <label class="select-label">Tác giả *</label>
           <ng-select
-            [items]="data.authors$ | async"
+            [items]="authorsList"
             [multiple]="true"
             [closeOnSelect]="false"
             [hideSelected]="true"
@@ -179,7 +180,7 @@ import { BookService } from "../Data/book.service";
         <div class="col-span-1-5">
           <label class="select-label">Thể loại *</label>
           <ng-select
-            [items]="data.genres$ | async"
+            [items]="genresList"
             [multiple]="true"
             [closeOnSelect]="false"
             [hideSelected]="true"
@@ -375,6 +376,9 @@ export class BookDialogComponent {
   previewImageUrl: string | null = null;
   selectedImageFile: File | null = null;
 
+  authorsList: Author[] = [];
+  genresList: GenreModel[] = [];
+
   isbnLookupControl = new FormControl<string>("");
 
   bookForm: FormGroup = new FormGroup({
@@ -410,7 +414,10 @@ export class BookDialogComponent {
         this.isLookingUp.set(false);
         if (res && res.found) {
           this.lookupSuccess.set(true);
-          this.lookupMessage.set(`Đã tìm thấy sách: "${res.title}"! Dữ liệu đã được tự động điền.`);
+
+          const authorNames = (res.authors || []).join(", ");
+          const authorMsg = authorNames ? ` (Tác giả: ${authorNames})` : "";
+          this.lookupMessage.set(`Đã tìm thấy sách: "${res.title}"${authorMsg}! Dữ liệu và tác giả đã được tự động điền.`);
 
           this.bookForm.patchValue({
             isbn: res.isbn || isbn,
@@ -421,6 +428,33 @@ export class BookDialogComponent {
             language: res.language || this.bookForm.get("language")?.value,
             publisher: res.publisher || this.bookForm.get("publisher")?.value,
           });
+
+          // Handle automatic author selection
+          const matchedAuthorIds: number[] = [];
+          if (res.matchedAuthors && res.matchedAuthors.length > 0) {
+            for (const ma of res.matchedAuthors) {
+              if (!this.authorsList.some((a) => a.id === ma.id)) {
+                this.authorsList = [...this.authorsList, { id: ma.id, authorName: ma.authorName }];
+              }
+              matchedAuthorIds.push(ma.id);
+            }
+          } else if (res.authorIds && res.authorIds.length > 0) {
+            matchedAuthorIds.push(...res.authorIds);
+          } else if (res.authors && res.authors.length > 0) {
+            for (const name of res.authors) {
+              const trimmed = name.trim().toLowerCase();
+              const found = this.authorsList.find(
+                (a) => a.authorName.toLowerCase() === trimmed
+              );
+              if (found && !matchedAuthorIds.includes(found.id)) {
+                matchedAuthorIds.push(found.id);
+              }
+            }
+          }
+
+          if (matchedAuthorIds.length > 0) {
+            this.bookForm.get("authorIds")?.setValue(matchedAuthorIds);
+          }
 
           if (res.imageUrl) {
             this.previewImageUrl = res.imageUrl;
@@ -476,6 +510,17 @@ export class BookDialogComponent {
       genres$: Observable<Array<GenreModel>>;
     }
   ) {
+    if (this.data.authors$) {
+      this.data.authors$.subscribe((authors) => {
+        this.authorsList = [...(authors || [])];
+      });
+    }
+    if (this.data.genres$) {
+      this.data.genres$.subscribe((genres) => {
+        this.genresList = [...(genres || [])];
+      });
+    }
+
     if (data.book != null) {
       const b = data.book;
       const authorIds = (b.authors || []).map((a) => a.id);
@@ -504,11 +549,7 @@ export class BookDialogComponent {
       }
 
       if (b.imageUrl) {
-        if (b.imageUrl.startsWith("http://") || b.imageUrl.startsWith("https://")) {
-          this.previewImageUrl = b.imageUrl;
-        } else {
-          this.previewImageUrl = this.imageBaseUrl + b.imageUrl;
-        }
+        this.previewImageUrl = getImageUrl(b.imageUrl);
       }
     }
   }

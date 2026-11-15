@@ -65,7 +65,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: allowedOrigins,
     policy =>
     {
-        policy.WithOrigins("*").WithHeaders("*").WithMethods("*");
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
     });
 });
 builder.Services.AddTransient<ExceptionMiddleware>();
@@ -91,6 +91,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(allowedOrigins);
+
 app.UseHttpsRedirection();
 
 // mapping Uploads folder to Resources folder 
@@ -101,7 +103,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Resources"
 });
 
-app.UseCors(allowedOrigins);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+           Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    RequestPath = "/Uploads"
+});
 
 app.UseOutputCache();
 

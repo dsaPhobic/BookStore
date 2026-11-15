@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
 import { MatTableModule } from "@angular/material/table";
-import { environment } from "../../../environments/environment.development";
+import { environment } from "../../../environments/environment";
 import { OrderItem } from "../../order/data/user-order.model";
 import { CurrencyPipe } from "@angular/common";
+import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
   selector: "app-customer-order-detail-list",
@@ -15,7 +16,7 @@ import { CurrencyPipe } from "@angular/common";
           <th mat-header-cell *matHeaderCellDef>Cover</th>
           <td mat-cell *matCellDef="let element">
             <img
-              [src]="baseUrl + element.book.imageUrl"
+              [src]="getImageUrl(element.book.imageUrl)"
               [alt]="element.book.title"
               class="order-thumb"
             />
@@ -83,6 +84,10 @@ import { CurrencyPipe } from "@angular/common";
 export class CustomerOrderDetailListComponent {
   @Input({ required: true }) OrderItems!: OrderItem[];
   baseUrl = environment.baseUrl + "/resources/";
+
+  getImageUrl(url?: string | null): string {
+    return getImageUrl(url);
+  }
 
   displayedColumns = [
     "imageUrl",

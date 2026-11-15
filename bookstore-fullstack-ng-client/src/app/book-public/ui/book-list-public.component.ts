@@ -12,6 +12,7 @@ import { RouterModule } from "@angular/router";
 import { MatCardModule } from "@angular/material/card";
 import { environment } from "../../../environments/environment";
 import { BookReadModel } from "../../book/Data/book-read.model";
+import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
   selector: "app-book-list-public",
@@ -31,9 +32,10 @@ import { BookReadModel } from "../../book/Data/book-read.model";
         <img
           *ngIf="book.imageUrl; else placeholderCover"
           class="book-cover"
-          [src]="baseUrl + '/resources/' + book.imageUrl"
+          [src]="getImageUrl(book.imageUrl)"
           [alt]="book.title"
           loading="lazy"
+          (error)="onImageError($event)"
         />
         <ng-template #placeholderCover>
           <div class="cover-placeholder">
@@ -65,7 +67,6 @@ import { BookReadModel } from "../../book/Data/book-read.model";
           <div class="book-price">\${{ book.price }}</div>
           <button
             mat-flat-button
-            color="accent"
             class="add-btn"
             (click)="addToCart.emit(book)"
           >
@@ -143,13 +144,14 @@ import { BookReadModel } from "../../book/Data/book-read.model";
         position: absolute;
         top: 10px;
         right: 10px;
-        background: rgba(26, 35, 77, 0.82);
-        backdrop-filter: blur(6px);
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
         color: #fff;
         font-size: 11px;
         font-weight: 600;
-        padding: 3px 9px;
-        border-radius: 999px;
+        padding: 3px 8px;
+        border-radius: var(--bs-radius-sm);
+        letter-spacing: 0.04em;
       }
 
       .card-body {
@@ -167,16 +169,18 @@ import { BookReadModel } from "../../book/Data/book-read.model";
       }
 
       .book-title {
-        font-family: var(--bs-font-heading);
-        font-size: 17px;
+        font-family: var(--bs-font-sans);
+        font-size: 15px;
         font-weight: 700;
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
         text-decoration: none;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        line-height: 1.3;
+        line-height: 1.35;
+        letter-spacing: -0.01em;
+        transition: color 0.15s ease;
       }
 
       .book-title:hover {
@@ -191,7 +195,7 @@ import { BookReadModel } from "../../book/Data/book-read.model";
 
       .card-footer {
         margin-top: auto;
-        padding-top: 10px;
+        padding-top: 12px;
         border-top: 1px solid var(--bs-border);
         display: flex;
         align-items: center;
@@ -200,14 +204,33 @@ import { BookReadModel } from "../../book/Data/book-read.model";
       }
 
       .book-price {
-        font-size: 19px;
+        font-family: var(--bs-font-mono);
+        font-size: 17px;
         font-weight: 700;
-        color: var(--bs-ink-dark);
+        color: var(--bs-ink);
+        letter-spacing: -0.02em;
       }
 
       .add-btn {
-        height: 36px !important;
-        padding: 0 14px !important;
+        background: var(--bs-ink) !important;
+        color: #ffffff !important;
+        height: 34px !important;
+        padding: 0 12px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        border-radius: var(--bs-radius-sm) !important;
+        transition: background 0.15s ease;
+      }
+
+      .add-btn:hover {
+        background: #1e293b !important;
+      }
+
+      .add-btn .mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
       }
     `,
   ],
@@ -217,4 +240,15 @@ export class BookListPublicComponent {
   baseUrl = environment.baseUrl;
   @Input() books!: readonly BookReadModel[];
   @Output() addToCart = new EventEmitter<BookReadModel>();
+
+  getImageUrl(url?: string | null): string {
+    return getImageUrl(url);
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.style.display = "none";
+    }
+  }
 }
