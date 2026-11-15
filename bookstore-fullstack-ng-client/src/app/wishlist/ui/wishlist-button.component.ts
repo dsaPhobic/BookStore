@@ -57,12 +57,13 @@ import { WishlistStore } from "../wishlist.store";
       }
 
       .wishlist-icon {
-        display: block;
+        display: inline-block;
         width: 24px;
         height: 24px;
         flex: 0 0 24px;
         fill: currentColor;
         color: #111827;
+        vertical-align: middle;
       }
 
       .wishlist-button.active .wishlist-icon {
@@ -80,6 +81,15 @@ import { WishlistStore } from "../wishlist.store";
 
       .wishlist-button.compact .wishlist-icon {
         margin: auto;
+      }
+
+      .wishlist-button:not(.compact) {
+        min-width: 144px;
+        white-space: nowrap;
+      }
+
+      .wishlist-button:not(.compact) .wishlist-icon {
+        margin-right: 8px;
       }
     `,
   ],
