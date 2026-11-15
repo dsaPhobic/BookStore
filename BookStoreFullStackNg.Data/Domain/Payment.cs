@@ -13,4 +13,5 @@ public class Payment
     public PaymentStatus Status { get; set; }
     public DateTime PaymentDate { get; set; }
     public double Amount { get; set; }
+    public long? GatewayAmountVnd { get; set; }
 }

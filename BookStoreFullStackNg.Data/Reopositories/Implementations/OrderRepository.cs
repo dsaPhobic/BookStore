@@ -140,14 +140,34 @@ public class OrderRepository : IOrderRepository
         }
     }
 
-    public async Task<bool> CompleteDemoNetBankingPayment(int orderId, int userId)
+    public async Task<bool> SetSePayAmount(int orderId, int userId, long amountVnd)
     {
         var payment = await _context.Payments
             .Include(item => item.Order)
             .SingleOrDefaultAsync(item =>
                 item.OrderId == orderId && item.Order.UserId == userId);
 
-        if (payment == null || payment.Method != PaymentMethod.NetBanking)
+        if (payment == null ||
+            payment.Method != PaymentMethod.NetBanking ||
+            payment.Status != PaymentStatus.Pending ||
+            amountVnd <= 0)
+        {
+            return false;
+        }
+
+        payment.GatewayAmountVnd = amountVnd;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> CompleteSePayPayment(int orderId, long amountVnd)
+    {
+        var payment = await _context.Payments
+            .SingleOrDefaultAsync(item => item.OrderId == orderId);
+
+        if (payment == null ||
+            payment.Method != PaymentMethod.NetBanking ||
+            payment.GatewayAmountVnd != amountVnd)
         {
             return false;
         }
@@ -163,6 +183,34 @@ public class OrderRepository : IOrderRepository
         }
 
         payment.Status = PaymentStatus.Completed;
+        payment.PaymentDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> FailSePayPayment(int orderId, long amountVnd)
+    {
+        var payment = await _context.Payments
+            .SingleOrDefaultAsync(item => item.OrderId == orderId);
+
+        if (payment == null ||
+            payment.Method != PaymentMethod.NetBanking ||
+            payment.GatewayAmountVnd != amountVnd)
+        {
+            return false;
+        }
+
+        if (payment.Status == PaymentStatus.Failed)
+        {
+            return true;
+        }
+
+        if (payment.Status != PaymentStatus.Pending)
+        {
+            return false;
+        }
+
+        payment.Status = PaymentStatus.Failed;
         payment.PaymentDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return true;

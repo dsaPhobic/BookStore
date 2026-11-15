@@ -350,6 +350,9 @@ namespace BookStoreFullStackNg.Data.Migrations
                     b.Property<double>("Amount")
                         .HasColumnType("REAL");
 
+                    b.Property<long?>("GatewayAmountVnd")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Method")
                         .HasColumnType("INTEGER");
 

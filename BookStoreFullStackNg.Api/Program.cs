@@ -2,6 +2,7 @@ using System.Text;
 using BookStoreFullStackNg.Api.Helpers.Wrapper;
 using BookStoreFullStackNg.Api.Hubs;
 using BookStoreFullStackNg.Api.Middlewares;
+using BookStoreFullStackNg.Api.Services;
 using BookStoreFullStackNg.Data.Data;
 using BookStoreFullStackNg.Data.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddControllers();
+builder.Services.Configure<SePayOptions>(
+    builder.Configuration.GetSection(SePayOptions.SectionName));
+builder.Services.AddSingleton<ISePayCheckoutService, SePayCheckoutService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

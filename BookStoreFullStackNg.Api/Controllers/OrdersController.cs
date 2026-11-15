@@ -1,7 +1,9 @@
-﻿using BookStoreFullStackNg.Api.Exceptions;
+﻿using System.Globalization;
+using BookStoreFullStackNg.Api.Exceptions;
 using BookStoreFullStackNg.Api.Helpers;
 using BookStoreFullStackNg.Api.Hubs;
 using BookStoreFullStackNg.Api.Models;
+using BookStoreFullStackNg.Api.Services;
 using BookStoreFullStackNg.Data.Constants;
 using BookStoreFullStackNg.Data.DTOs.Common;
 using BookStoreFullStackNg.Data.DTOs.Order;
@@ -35,18 +37,21 @@ public class OrdersController : ControllerBase
     private readonly bool _isDevelopment;
     private readonly IHubContext<NotificationHub> _notificationHub;
     private readonly ILogger<OrdersController> _logger;
+    private readonly ISePayCheckoutService? _sePayCheckoutService;
     public OrdersController(
         IOrderRepository orderRepository,
         IUserRepository userRepository,
         IHubContext<NotificationHub> notificationHub,
         ILogger<OrdersController> logger,
-        IHostEnvironment? hostEnvironment = null)
+        IHostEnvironment? hostEnvironment = null,
+        ISePayCheckoutService? sePayCheckoutService = null)
     {
         _orderRepository = orderRepository;
         _userRepository = userRepository;
         _isDevelopment = hostEnvironment?.IsDevelopment() ?? false;
         _notificationHub = notificationHub;
         _logger = logger;
+        _sePayCheckoutService = sePayCheckoutService;
     }
 
     [HttpGet("payment-methods")]
@@ -101,20 +106,24 @@ public class OrdersController : ControllerBase
         var order = await _orderRepository.CreateOrder(user.Id, orderToCreate);
         if (paymentMethod == PaymentMethod.NetBanking)
         {
-            return Ok(new DemoNetBankingOrderDto
+            var sePay = _sePayCheckoutService
+                ?? throw new InvalidOperationException("SePay checkout service is unavailable.");
+            var amountVnd = sePay.ConvertUsdToVnd(order.Payment.Amount);
+            if (!await _orderRepository.SetSePayAmount(order.Id, user.Id, amountVnd))
             {
-                OrderId = order.Id,
-                Amount = order.Payment.Amount
-            });
+                throw new InvalidOperationException("Could not prepare the SePay payment amount.");
+            }
+
+            return Ok(new SePayOrderCreatedDto(order.Id, amountVnd));
         }
 
         return NoContent();
     }
 
-    [HttpPost("{orderId:int}/demo-netbanking-payment")]
-    public async Task<IActionResult> CompleteDemoNetBankingPayment(int orderId)
+    [HttpGet("{orderId:int}/sepay-checkout")]
+    public async Task<IActionResult> GetSePayCheckout(int orderId)
     {
-        if (!_isDevelopment)
+        if (!_isDevelopment || _sePayCheckoutService?.IsConfigured != true)
         {
             return NotFound();
         }
@@ -131,14 +140,128 @@ public class OrdersController : ControllerBase
             throw new BadRequestException("User is not logged in");
         }
 
-        var completed = await _orderRepository.CompleteDemoNetBankingPayment(
-            orderId,
-            user.Id);
-        return completed ? NoContent() : NotFound();
+        var order = await _orderRepository.GetOrderById(orderId);
+        if (order is null || order.UserId != user.Id)
+        {
+            return NotFound();
+        }
+
+        if (order.Payment.Method != PaymentMethod.NetBanking ||
+            order.Payment.Status != PaymentStatus.Pending ||
+            order.Payment.GatewayAmountVnd is null)
+        {
+            return Conflict();
+        }
+
+        return Ok(_sePayCheckoutService.CreateCheckoutSession(order));
+    }
+
+    [HttpGet("{orderId:int}/payment-status")]
+    public async Task<IActionResult> GetPaymentStatus(int orderId)
+    {
+        var username = User?.Identity?.Name;
+        if (string.IsNullOrEmpty(username))
+        {
+            throw new BadRequestException("User is not logged in");
+        }
+
+        var user = await _userRepository.GetUserByUserNameAsync(username);
+        if (user is null)
+        {
+            throw new BadRequestException("User is not logged in");
+        }
+
+        var order = await _orderRepository.GetOrderById(orderId);
+        if (order is null ||
+            order.UserId != user.Id ||
+            order.Payment.Method != PaymentMethod.NetBanking)
+        {
+            return NotFound();
+        }
+
+        return Ok(new OrderPaymentStatusDto(order.Id, order.Payment.Status.ToString()));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("sepay-ipn")]
+    public async Task<IActionResult> SePayIpn([FromBody] SePayIpnRequest notification)
+    {
+        var sePay = _sePayCheckoutService;
+        if (sePay?.IsConfigured != true)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
+        if (!sePay.IsValidIpnSecret(Request.Headers["X-Secret-Key"].ToString()))
+        {
+            return Unauthorized();
+        }
+
+        if (notification.Timestamp <= 0)
+        {
+            return BadRequest();
+        }
+
+        if (!string.Equals(notification.NotificationType, "ORDER_PAID", StringComparison.Ordinal) &&
+            !string.Equals(notification.NotificationType, "TRANSACTION_VOID", StringComparison.Ordinal))
+        {
+            return Ok(new { success = true });
+        }
+
+        var orderNotice = notification.Order;
+        var transaction = notification.Transaction;
+        if (orderNotice is null ||
+            transaction is null ||
+            !string.Equals(orderNotice.Currency, "VND", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(transaction.Currency, "VND", StringComparison.OrdinalIgnoreCase) ||
+            !sePay.TryGetOrderId(orderNotice.InvoiceNumber, out var orderId) ||
+            !decimal.TryParse(
+                orderNotice.Amount,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var orderAmount) ||
+            !decimal.TryParse(
+                transaction.Amount,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var transactionAmount) ||
+            orderAmount <= 0 ||
+            orderAmount != transactionAmount ||
+            orderAmount != decimal.Truncate(orderAmount))
+        {
+            _logger.LogWarning(
+                "Rejected invalid SePay IPN for invoice {InvoiceNumber}",
+                notification.Order?.InvoiceNumber);
+            return BadRequest();
+        }
+
+        var amountVnd = decimal.ToInt64(orderAmount);
+        var paymentUpdated = notification.NotificationType switch
+        {
+            "ORDER_PAID" =>
+                string.Equals(orderNotice.Status, "CAPTURED", StringComparison.Ordinal) &&
+                string.Equals(transaction.Type, "PAYMENT", StringComparison.Ordinal) &&
+                string.Equals(transaction.Status, "APPROVED", StringComparison.Ordinal) &&
+                await _orderRepository.CompleteSePayPayment(orderId, amountVnd),
+            "TRANSACTION_VOID" =>
+                await _orderRepository.FailSePayPayment(orderId, amountVnd),
+            _ => true
+        };
+
+        if (!paymentUpdated)
+        {
+            _logger.LogWarning(
+                "Could not match SePay payment for order {OrderId} and amount {AmountVnd}",
+                orderId,
+                amountVnd);
+            return Conflict();
+        }
+
+        return Ok(new { success = true });
     }
 
     private IEnumerable<PaymentMethod> GetAvailablePaymentMethods() =>
-        _isDevelopment
+        _isDevelopment && _sePayCheckoutService?.IsConfigured == true
             ? DevelopmentPaymentMethods
             : ProductionPaymentMethods;
 
