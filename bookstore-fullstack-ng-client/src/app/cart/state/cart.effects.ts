@@ -2,7 +2,7 @@ import { inject, Injectable } from "@angular/core";
 import { CartService } from "../data/cart.service";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { CartActions } from "./cart.actions";
-import { catchError, map, of, switchMap } from "rxjs";
+import { catchError, map, of, switchMap, tap } from "rxjs";
 
 @Injectable()
 export class CartEffects {
@@ -52,6 +52,14 @@ export class CartEffects {
     )
   );
 
+  /** After a failed cart update, reload from server to sync UI back to real state */
+  reloadAfterUpdateFailure = createEffect(() =>
+    this.actions$.pipe(
+      ofType(CartActions.updateCartItemFailure),
+      map(() => CartActions.loadCartItems())
+    )
+  );
+
   deleteCartItem = createEffect(() =>
     this.actions$.pipe(
       ofType(CartActions.deleteCartItem),
@@ -78,3 +86,4 @@ export class CartEffects {
     )
   );
 }
+

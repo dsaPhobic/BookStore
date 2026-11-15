@@ -72,14 +72,17 @@ import { getImageUrl } from "../../utils/image.utils";
 
         <div class="card-footer">
           <div class="book-price">\${{ book.price }}</div>
+          <span class="out-of-stock-badge" *ngIf="book.stockQuantity < 1">
+            <mat-icon class="oos-icon">inventory_2</mat-icon> Hết hàng
+          </span>
           <button
+            *ngIf="book.stockQuantity > 0"
             mat-flat-button
             class="add-btn"
-            [disabled]="book.stockQuantity < 1"
             (click)="addToCart.emit(book)"
           >
             <mat-icon>add_shopping_cart</mat-icon>
-            {{ book.stockQuantity > 0 ? "Add" : "Out of stock" }}
+            Thêm vào giỏ
           </button>
         </div>
       </div>
@@ -247,6 +250,27 @@ import { getImageUrl } from "../../utils/image.utils";
         width: 16px;
         height: 16px;
         margin-right: 4px;
+      }
+
+      .out-of-stock-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 34px;
+        padding: 0 10px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: var(--bs-radius-sm);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .oos-icon {
+        font-size: 14px !important;
+        width: 14px !important;
+        height: 14px !important;
       }
     `,
   ],
