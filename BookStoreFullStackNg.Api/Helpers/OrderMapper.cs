@@ -54,6 +54,7 @@ public static class OrderMapper
                         Title = item.Book.Title,
                         Description = item.Book.Description,
                         Price = item.Book.Price,
+                        StockQuantity = item.Book.StockQuantity,
                         ImageUrl = item.Book.ImageUrl,
                         PublishedYear = item.Book.PublishedYear,
                         Authors = item.Book.BookAuthors.Select(ba => new AuthorReadDTO
@@ -93,6 +94,7 @@ public static class OrderMapper
                 Title = item.Book.Title,
                 Description = item.Book.Description,
                 Price = item.Book.Price,
+                StockQuantity = item.Book.StockQuantity,
                 ImageUrl = item.Book.ImageUrl,
                 PublishedYear = item.Book.PublishedYear,
                 Authors = item.Book.BookAuthors.Select(ba => new AuthorReadDTO

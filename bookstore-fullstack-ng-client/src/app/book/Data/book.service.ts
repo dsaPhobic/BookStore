@@ -71,6 +71,7 @@ export class BookService {
     formData.append("title", book.title);
     formData.append("description", book.description);
     formData.append("price", book.price.toString());
+    formData.append("stockQuantity", book.stockQuantity.toString());
     formData.append("publishedYear", book.publishedYear.toString());
     if (book.imageUrl) formData.append("imageUrl", book.imageUrl);
     if (book.imagePublicId) formData.append("imagePublicId", book.imagePublicId);
@@ -102,6 +103,7 @@ export class BookService {
     formData.append("title", book.title);
     formData.append("description", book.description);
     formData.append("price", book.price.toString());
+    formData.append("stockQuantity", book.stockQuantity.toString());
     formData.append("publishedYear", book.publishedYear.toString());
     if (book.imageUrl) formData.append("imageUrl", book.imageUrl);
     if (book.imagePublicId) formData.append("imagePublicId", book.imagePublicId);

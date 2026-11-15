@@ -43,7 +43,10 @@ import { ConfirmationService } from "../common/confirmation.service";
     </div>
 
     <ng-container *ngIf="cartItems$ | async as cartItems">
-      <ng-container *ngIf="cartItems.length > 0; else noitems">
+    <p class="cart-error" *ngIf="error$ | async as cartError" role="alert">
+      {{ cartError.error?.message || "Unable to update the cart. Please try again." }}
+    </p>
+    <ng-container *ngIf="cartItems.length > 0; else noitems">
         <div class="cart-grid">
           <div class="cart-items-col">
             <div class="cart-items-actions">
@@ -90,6 +93,11 @@ import { ConfirmationService } from "../common/confirmation.service";
         grid-template-columns: 1fr 340px;
         gap: 28px;
         align-items: start;
+      }
+
+      .cart-error {
+        margin: 0 0 16px;
+        color: #b91c1c;
       }
 
       .cart-items-col {

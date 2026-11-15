@@ -14,7 +14,13 @@ public class BookStoreContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<Author>().ToTable("Author");
-        modelBuilder.Entity<Book>().ToTable("Book");
+        modelBuilder.Entity<Book>().ToTable("Book", entity =>
+        {
+            entity.HasCheckConstraint("CK_Book_StockQuantity_NonNegative", "\"StockQuantity\" >= 0");
+        });
+        modelBuilder.Entity<Book>()
+            .Property(book => book.StockQuantity)
+            .HasDefaultValue(0);
         modelBuilder.Entity<BookAuthor>().ToTable("BookAuthor");
         modelBuilder.Entity<BookGenre>().ToTable("BookGenre");
         modelBuilder.Entity<Cart>().ToTable("Cart");

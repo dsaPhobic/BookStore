@@ -75,10 +75,11 @@ import { getImageUrl } from "../../utils/image.utils";
           <button
             mat-flat-button
             class="add-btn"
+            [disabled]="book.stockQuantity < 1"
             (click)="addToCart.emit(book)"
           >
             <mat-icon>add_shopping_cart</mat-icon>
-            Add
+            {{ book.stockQuantity > 0 ? "Add" : "Out of stock" }}
           </button>
         </div>
       </div>

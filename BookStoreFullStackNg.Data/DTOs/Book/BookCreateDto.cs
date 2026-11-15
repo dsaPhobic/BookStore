@@ -18,6 +18,9 @@ public class BookCreateDto
     [Range(0, 100000000)]
     public double Price { get; set; }
 
+    [Range(0, int.MaxValue)]
+    public int StockQuantity { get; set; }
+
     public string? ImageUrl { get; set; }
     public string? ImagePublicId { get; set; }
 

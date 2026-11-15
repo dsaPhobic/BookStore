@@ -6,6 +6,7 @@ export interface BookReadModel {
   title: string;
   description: string;
   price: number;
+  stockQuantity: number;
   imageUrl?: string | null;
   imagePublicId?: string | null;
   publishedYear: number;

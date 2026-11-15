@@ -114,6 +114,11 @@ namespace BookStoreFullStackNg.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("StockQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -121,7 +126,10 @@ namespace BookStoreFullStackNg.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Book", (string)null);
+                    b.ToTable("Book", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Book_StockQuantity_NonNegative", "\"StockQuantity\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("BookStoreFullStackNg.Data.Domain.BookAuthor", b =>
@@ -300,6 +308,12 @@ namespace BookStoreFullStackNg.Data.Migrations
 
                     b.Property<double>("ShippingFee")
                         .HasColumnType("REAL");
+
+                    b.Property<DateTime?>("StockReservedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("StockRestoredAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("TaxInPercent")
                         .HasColumnType("REAL");

@@ -131,6 +131,9 @@ interface BookDetailResult {
             <span class="detail-price">
               \${{ currentBook.price | number: "1.2-2" }}
             </span>
+            <span class="stock-status" [class.out-of-stock]="currentBook.stockQuantity < 1">
+              {{ currentBook.stockQuantity > 0 ? currentBook.stockQuantity + " in stock" : "Out of stock" }}
+            </span>
           </div>
 
           <div class="desc-section">
@@ -142,6 +145,7 @@ interface BookDetailResult {
             <button
               mat-flat-button
               (click)="addToCart(currentBook)"
+              [disabled]="currentBook.stockQuantity < 1"
               class="buy-btn"
             >
               <mat-icon>shopping_bag</mat-icon>
@@ -304,6 +308,17 @@ interface BookDetailResult {
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: var(--bs-muted);
+      }
+
+      .stock-status {
+        margin-left: auto;
+        color: #15803d;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .stock-status.out-of-stock {
+        color: #b91c1c;
       }
 
       .detail-price {

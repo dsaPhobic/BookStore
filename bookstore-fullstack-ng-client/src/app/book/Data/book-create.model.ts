@@ -3,6 +3,7 @@ export interface BookCreateModel {
   title: string;
   description: string;
   price: number;
+  stockQuantity: number;
   publishedYear: number;
   authorIds: number[];
   genreIds: number[];

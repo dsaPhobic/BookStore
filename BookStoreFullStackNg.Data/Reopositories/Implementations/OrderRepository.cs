@@ -24,6 +24,42 @@ public class OrderRepository : IOrderRepository
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            var cart = await _context.Carts
+                .Include(item => item.CartItems)
+                .FirstOrDefaultAsync(item => item.UserId == userId);
+
+            if (cart == null || cart.CartItems.Count == 0)
+            {
+                throw new InvalidOperationException("The cart is empty.");
+            }
+
+            foreach (var cartItem in cart.CartItems)
+            {
+                if (cartItem.Quantity <= 0)
+                {
+                    throw new InvalidOperationException("Cart quantity must be greater than zero.");
+                }
+
+                var reserved = await _context.Books
+                    .Where(book =>
+                        book.Id == cartItem.BookId &&
+                        book.StockQuantity >= cartItem.Quantity)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(book => book.StockQuantity, book => book.StockQuantity - cartItem.Quantity));
+
+                if (reserved == 0)
+                {
+                    var bookTitle = await _context.Books
+                        .Where(book => book.Id == cartItem.BookId)
+                        .Select(book => book.Title)
+                        .SingleOrDefaultAsync();
+                    throw new StockUnavailableException(
+                        bookTitle == null
+                            ? "A book in your cart is no longer available."
+                            : $"There is not enough stock for '{bookTitle}'.");
+                }
+            }
+
             // Revalidate coupons at checkout; the apply endpoint is only a preview.
             double discountPercent = 0;
             double maxDiscount = double.MaxValue;
@@ -59,29 +95,16 @@ public class OrderRepository : IOrderRepository
                 CouponCode = couponCode,
                 OrderStatus = OrderStatus.Pending,
                 UserId = userId,
+                StockReservedAt = DateTime.UtcNow,
             };
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // find the cart items of the user
-            var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
-            {
-                throw new InvalidOperationException("Cart is null");
-            }
-
-            var cartItems = await _context.CartItems.Where(ci => ci.CartId == cart.Id).ToListAsync();
-
-            if (cartItems.Count == 0)
-            {
-                throw new InvalidOperationException("No cart items in the cart");
-            }
             double subTotal = 0;
             // add cart items to the orderItem
             foreach (var cartItem in cart.CartItems)
             {
-                var book = await _context.Books.AsNoTracking().SingleAsync(b => b.Id == cartItem.BookId);
+                var book = await _context.Books.AsNoTracking().SingleOrDefaultAsync(b => b.Id == cartItem.BookId);
 
                 if (book == null)
                 {
@@ -123,7 +146,7 @@ public class OrderRepository : IOrderRepository
             await _context.SaveChangesAsync();
 
             // delete cart items
-            _context.CartItems.RemoveRange(cartItems);
+            _context.CartItems.RemoveRange(cart.CartItems);
             await _context.SaveChangesAsync();
 
             // delete cart
@@ -288,6 +311,7 @@ public class OrderRepository : IOrderRepository
 
     public async Task<Order?> UpdateOrderStatus(int orderId, OrderStatus orderStatus)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         var order = await _context.Orders
                                 .Include(c => c.OrderItems)
                                 .ThenInclude(c => c.Book)
@@ -301,12 +325,76 @@ public class OrderRepository : IOrderRepository
 
         if (order is null)
         {
+            await transaction.RollbackAsync();
             return null;
         }
 
-        order.OrderStatus = orderStatus;
+        if (orderStatus == OrderStatus.Cancelled)
+        {
+            await CancelAndRestoreStockAsync(order);
+        }
+        else
+        {
+            order.OrderStatus = orderStatus;
+        }
+
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return order;
+    }
+
+    private async Task CancelAndRestoreStockAsync(Order order)
+    {
+        if (!order.StockReservedAt.HasValue)
+        {
+            order.OrderStatus = OrderStatus.Cancelled;
+            return;
+        }
+
+        if (order.StockRestoredAt.HasValue)
+        {
+            order.OrderStatus = OrderStatus.Cancelled;
+            return;
+        }
+
+        var restoredAt = DateTime.UtcNow;
+        var updated = await _context.Orders
+            .Where(item =>
+                item.Id == order.Id &&
+                item.StockReservedAt.HasValue &&
+                !item.StockRestoredAt.HasValue &&
+                item.OrderStatus != OrderStatus.Cancelled)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.OrderStatus, OrderStatus.Cancelled)
+                .SetProperty(item => item.StockRestoredAt, restoredAt));
+
+        if (updated == 0)
+        {
+            await _context.Entry(order).ReloadAsync();
+            if (order.OrderStatus != OrderStatus.Cancelled &&
+                !order.StockRestoredAt.HasValue)
+            {
+                throw new InvalidOperationException("The order could not be cancelled safely.");
+            }
+            return;
+        }
+
+        order.OrderStatus = OrderStatus.Cancelled;
+        order.StockRestoredAt = restoredAt;
+
+        foreach (var orderItem in order.OrderItems)
+        {
+            var restored = await _context.Books
+                .Where(book => book.Id == orderItem.BookId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(book => book.StockQuantity, book => book.StockQuantity + orderItem.Quantity));
+
+            if (restored == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Book {orderItem.BookId} for order {order.Id} no longer exists.");
+            }
+        }
     }
 
 }

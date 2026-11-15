@@ -43,6 +43,9 @@ public class ExceptionMiddleware : IMiddleware
             case InvalidOperationException _:
                 statusCode = StatusCodes.Status400BadRequest;
                 break;
+            case StockUnavailableException _:
+                statusCode = StatusCodes.Status409Conflict;
+                break;
             default:
                 statusCode = StatusCodes.Status500InternalServerError;
                 break;

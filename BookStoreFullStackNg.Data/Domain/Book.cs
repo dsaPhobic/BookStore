@@ -18,6 +18,8 @@ public class Book
 
     public double Price { get; set; }
 
+    public int StockQuantity { get; set; }
+
     [MaxLength(500)]
     public string? ImageUrl { get; set; }
 
