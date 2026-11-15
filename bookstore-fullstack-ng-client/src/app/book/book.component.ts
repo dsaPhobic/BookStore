@@ -2,7 +2,12 @@ import { Component, inject, OnDestroy, OnInit } from "@angular/core";
 import { BookListComponent } from "./ui/book-list.component";
 import { Store } from "@ngrx/store";
 import { BookActions } from "./state/book.actions";
-import { selectBooks, selectBookTotalCount } from "./state/book.selectors";
+import {
+  selectBooks,
+  selectBookCurrentPage,
+  selectBookPageSize,
+  selectBookTotalCount,
+} from "./state/book.selectors";
 import { AsyncPipe, NgIf } from "@angular/common";
 import { BookReadModel } from "./Data/book-read.model";
 import { map, Observable, Subject, takeUntil } from "rxjs";
@@ -23,6 +28,9 @@ import { Author } from "../authors/data/author.model";
 import { PageSelectorModel } from "../common/page-selector.model";
 import { BookPaginatorComponent } from "./ui/book-paginator.component";
 import { BookFilterComponent } from "./ui/book-filter.component";
+import { ActivatedRoute, Router } from "@angular/router";
+
+const ADMIN_BOOK_PAGE_SIZES = [5, 10, 25, 50, 100];
 
 @Component({
   selector: "app-book",
@@ -75,6 +83,8 @@ import { BookFilterComponent } from "./ui/book-filter.component";
       <app-book-paginator
         (pageSelect)="onPageSelect($event)"
         [totalRecords]="totalCount"
+        [currentPage]="(currentPage$ | async) ?? 1"
+        [pageSize]="(pageSize$ | async) ?? 10"
       />
     </ng-container>
   `,
@@ -105,9 +115,13 @@ export class BookComponent implements OnInit, OnDestroy {
   dialog = inject(MatDialog);
   destroyed$ = new Subject<boolean>();
   store = inject(Store);
+  route = inject(ActivatedRoute);
+  router = inject(Router);
   loading$ = this.store.select(selectAuthorLoading);
   error$ = this.store.select(selectAuthorError);
   totalCount$ = this.store.select(selectBookTotalCount);
+  currentPage$ = this.store.select(selectBookCurrentPage);
+  pageSize$ = this.store.select(selectBookPageSize);
 
   authors$: Observable<Author[]> = this.authorService
     .getAuthors({ pageSize: 1000 })
@@ -171,7 +185,19 @@ export class BookComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadBooks();
+    this.route.queryParamMap
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((params) => {
+        const page = this.readPositiveInteger(params.get("page"), 1);
+        const requestedSize = this.readPositiveInteger(params.get("size"), 10);
+        const pageSize = ADMIN_BOOK_PAGE_SIZES.includes(requestedSize)
+          ? requestedSize
+          : 10;
+
+        this.store.dispatch(BookActions.setCurrentPage({ page }));
+        this.store.dispatch(BookActions.setPageSize({ pageSize }));
+        this.loadBooks();
+      });
   }
 
   ngOnDestroy(): void {
@@ -180,9 +206,14 @@ export class BookComponent implements OnInit, OnDestroy {
   }
 
   onPageSelect(page: PageSelectorModel) {
-    this.store.dispatch(BookActions.setCurrentPage({ page: page.page }));
-    this.store.dispatch(BookActions.setPageSize({ pageSize: page.limit }));
-    this.loadBooks();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        page: page.page > 1 ? page.page : null,
+        size: page.limit === 10 ? null : page.limit,
+      },
+      queryParamsHandling: "merge",
+    });
   }
 
   onPublishFrom(publishedFrom: number | null) {
@@ -198,5 +229,11 @@ export class BookComponent implements OnInit, OnDestroy {
   onFilter(searchTerm: string | null) {
     this.store.dispatch(BookActions.setSearchTerm({ searchTerm }));
     this.loadBooks();
+  }
+
+  private readPositiveInteger(value: string | null, fallback: number): number {
+    if (value === null || value.trim() === "") return fallback;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
   }
 }
