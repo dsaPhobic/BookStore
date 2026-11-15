@@ -32,6 +32,7 @@ import { getImageUrl } from "../utils/image.utils";
 import { CartActions } from "../cart/state/cart.actions";
 import { PublicBookService } from "./data/public-book.service";
 import { BookListPublicComponent } from "./ui/book-list-public.component";
+import { WishlistButtonComponent } from "../wishlist/ui/wishlist-button.component";
 
 type DetailStatus = "loading" | "success" | "notFound" | "error";
 
@@ -52,6 +53,7 @@ interface BookDetailResult {
     MatIconModule,
     MatProgressSpinnerModule,
     BookListPublicComponent,
+    WishlistButtonComponent,
   ],
   template: `
     <div class="breadcrumb-row">
@@ -145,6 +147,7 @@ interface BookDetailResult {
               <mat-icon>shopping_bag</mat-icon>
               Add to Shopping Cart
             </button>
+            <app-wishlist-button [book]="currentBook" />
             <a mat-stroked-button routerLink="/cart" class="view-cart-btn">View Cart</a>
           </div>
         </div>

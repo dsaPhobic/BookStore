@@ -12,6 +12,7 @@ import { RouterModule } from "@angular/router";
 import { MatCardModule } from "@angular/material/card";
 import { environment } from "../../../environments/environment";
 import { BookReadModel } from "../../book/Data/book-read.model";
+import { WishlistButtonComponent } from "../../wishlist/ui/wishlist-button.component";
 import { getImageUrl } from "../../utils/image.utils";
 
 @Component({
@@ -25,9 +26,15 @@ import { getImageUrl } from "../../utils/image.utils";
     MatButtonModule,
     MatIconModule,
     RouterModule,
+    WishlistButtonComponent,
   ],
   template: `
     <article class="book-card" *ngFor="let book of books">
+      <app-wishlist-button
+        class="wishlist-control"
+        [book]="book"
+        [compact]="true"
+      />
       <a class="cover-wrap" [routerLink]="['/books', book.id]">
         <img
           *ngIf="book.imageUrl; else placeholderCover"
@@ -87,6 +94,7 @@ import { getImageUrl } from "../../utils/image.utils";
       }
 
       .book-card {
+        position: relative;
         background: var(--bs-surface);
         border: 1px solid var(--bs-border);
         border-radius: var(--bs-radius);
@@ -94,6 +102,13 @@ import { getImageUrl } from "../../utils/image.utils";
         display: flex;
         flex-direction: column;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .wishlist-control {
+        position: absolute;
+        z-index: 2;
+        top: 10px;
+        left: 10px;
       }
 
       .book-card:hover {

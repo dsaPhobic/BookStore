@@ -25,6 +25,19 @@ public class BookStoreContext : DbContext
         modelBuilder.Entity<Payment>().ToTable("Payment");
         modelBuilder.Entity<User>().ToTable("User");
         modelBuilder.Entity<Coupon>().ToTable("Coupon");
+        modelBuilder.Entity<WishlistItem>().ToTable("WishlistItem");
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.HasIndex(item => new { item.UserId, item.BookId }).IsUnique();
+            entity.HasOne(item => item.User)
+                .WithMany()
+                .HasForeignKey(item => item.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(item => item.Book)
+                .WithMany()
+                .HasForeignKey(item => item.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Entity<Coupon>(entity =>
         {
             entity.Property(coupon => coupon.Code).HasMaxLength(50);
@@ -44,5 +57,6 @@ public class BookStoreContext : DbContext
     public DbSet<Payment> Payments { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<WishlistItem> WishlistItems { get; set; }
 
 }

@@ -28,5 +28,6 @@ public static class ServiceExtension
         services.AddHttpClient<IIsbnLookupService, GoogleBooksService>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<IWishlistRepository, WishlistRepository>();
     }
 }

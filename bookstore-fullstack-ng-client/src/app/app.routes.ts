@@ -2,6 +2,7 @@ import { Routes } from "@angular/router";
 import { HomeComponent } from "./home/home.component";
 import { roleGuard } from "./helpers/role.guard";
 import { routeGuard } from "./helpers/route.guard";
+import { wishlistGuard } from "./wishlist/wishlist.guard";
 
 export const routes: Routes = [
   {
@@ -78,6 +79,12 @@ export const routes: Routes = [
     canActivate: [routeGuard],
     loadComponent: () =>
       import("./cart/cart.component").then((c) => c.CartComponent),
+  },
+  {
+    path: "wishlist",
+    canActivate: [wishlistGuard],
+    loadComponent: () =>
+      import("./wishlist/wishlist.component").then((c) => c.WishlistComponent),
   },
   {
     path: "create-order",

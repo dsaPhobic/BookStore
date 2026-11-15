@@ -42,6 +42,7 @@ import { User } from "./account/data/user.model";
           <a routerLink="/home" routerLinkActive="active">Home</a>
           <a routerLink="/books" routerLinkActive="active">Books</a>
           <ng-container *ngIf="isLoggedIn">
+            <a routerLink="/wishlist" routerLinkActive="active">Wishlist</a>
             <a routerLink="/my-orders" routerLinkActive="active">My Orders</a>
             <button
               *ngIf="isInRole(['Admin'])"
@@ -148,6 +149,9 @@ import { User } from "./account/data/user.model";
       <a mat-menu-item routerLink="/my-orders">
         <mat-icon>local_shipping</mat-icon><span>My Orders</span>
       </a>
+      <a mat-menu-item routerLink="/wishlist">
+        <mat-icon>favorite_border</mat-icon><span>Wishlist</span>
+      </a>
       <a mat-menu-item routerLink="/cart">
         <mat-icon>shopping_bag</mat-icon><span>Cart ({{ cartCount }})</span>
       </a>
@@ -166,6 +170,9 @@ import { User } from "./account/data/user.model";
         <mat-icon>auto_stories</mat-icon><span>Books</span>
       </a>
       <ng-container *ngIf="isLoggedIn; else mobileGuest">
+        <a mat-menu-item routerLink="/wishlist">
+          <mat-icon>favorite_border</mat-icon><span>Wishlist</span>
+        </a>
         <a mat-menu-item routerLink="/my-orders">
           <mat-icon>local_shipping</mat-icon><span>My Orders</span>
         </a>
