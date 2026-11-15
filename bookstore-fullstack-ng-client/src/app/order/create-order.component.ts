@@ -8,7 +8,7 @@ import { Store } from "@ngrx/store";
 import { CartActions } from "../cart/state/cart.actions";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
-import { DemoNetBankingOrderModel } from "./data/demo-netbanking-order.model";
+import { SePayOrderCreatedModel } from "./data/sepay-payment.model";
 
 @Component({
   selector: "app-create-order",
@@ -70,13 +70,10 @@ export class CreateOrderComponent {
 
   handleOrderSubmit(orderToCreate: OrderCreateModel) {
     this.orderService.createOrder(orderToCreate).subscribe({
-      next: (demoNetBankingOrder: DemoNetBankingOrderModel | null) => {
+      next: (sePayOrder: SePayOrderCreatedModel | null) => {
         this.store.dispatch(CartActions.emptyCartItemState());
-        if (demoNetBankingOrder) {
-          this.router.navigate(
-            ["/demo-netbanking", demoNetBankingOrder.orderId],
-            { state: { amount: demoNetBankingOrder.amount } }
-          );
+        if (sePayOrder) {
+          this.router.navigate(["/sepay-checkout", sePayOrder.orderId]);
           return;
         }
 

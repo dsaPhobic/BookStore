@@ -95,11 +95,19 @@ export const routes: Routes = [
       ),
   },
   {
-    path: "demo-netbanking/:orderId",
+    path: "sepay-checkout/:orderId",
     canActivate: [routeGuard],
     loadComponent: () =>
-      import("./order/demo-netbanking.component").then(
-        (c) => c.DemoNetBankingComponent
+      import("./order/sepay-checkout.component").then(
+        (c) => c.SePayCheckoutComponent
+      ),
+  },
+  {
+    path: "sepay-result",
+    canActivate: [routeGuard],
+    loadComponent: () =>
+      import("./order/sepay-result.component").then(
+        (c) => c.SePayResultComponent
       ),
   },
   {

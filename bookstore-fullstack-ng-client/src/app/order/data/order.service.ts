@@ -7,7 +7,11 @@ import { OrderCreateModel } from "./order-create.model";
 import { OrderItem, UserOrderModel } from "./user-order.model";
 import { PagedList } from "../../common/paged-list.model";
 import { CouponApplyResultModel } from "./coupon-apply-result.model";
-import { DemoNetBankingOrderModel } from "./demo-netbanking-order.model";
+import {
+  OrderPaymentStatusModel,
+  SePayCheckoutSessionModel,
+  SePayOrderCreatedModel,
+} from "./sepay-payment.model";
 import { ShippingRateModel } from "./shipping-rate.model";
 
 @Injectable({ providedIn: "root" })
@@ -23,15 +27,20 @@ export class OrderService {
 
   createOrder = (
     data: OrderCreateModel
-  ): Observable<DemoNetBankingOrderModel | null> =>
-    this.http.post<DemoNetBankingOrderModel | null>(this.baseUrl, data);
+  ): Observable<SePayOrderCreatedModel | null> =>
+    this.http.post<SePayOrderCreatedModel | null>(this.baseUrl, data);
 
-  completeDemoNetBankingPayment(orderId: number): Observable<void> {
-    return this.http.post<void>(
-      `${this.baseUrl}/${orderId}/demo-netbanking-payment`,
-      {}
+  getSePayCheckout = (
+    orderId: number
+  ): Observable<SePayCheckoutSessionModel> =>
+    this.http.get<SePayCheckoutSessionModel>(
+      `${this.baseUrl}/${orderId}/sepay-checkout`
     );
-  }
+
+  getPaymentStatus = (orderId: number): Observable<OrderPaymentStatusModel> =>
+    this.http.get<OrderPaymentStatusModel>(
+      `${this.baseUrl}/${orderId}/payment-status`
+    );
 
   applyCoupon = (code: string): Observable<CouponApplyResultModel> =>
     this.http.post<CouponApplyResultModel>(
