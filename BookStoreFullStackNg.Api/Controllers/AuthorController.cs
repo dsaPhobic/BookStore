@@ -21,9 +21,9 @@ namespace BookStoreFullStackNg.Api.Controllers
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
-        private readonly ICloudinaryService? _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public AuthorController(IAuthorRepository authorRepository, IMapper mapper, ICloudinaryService? cloudinaryService = null)
+        public AuthorController(IAuthorRepository authorRepository, IMapper mapper, ICloudinaryService cloudinaryService)
         {
             _authorRepository = authorRepository;
             _mapper = mapper;
@@ -88,12 +88,9 @@ namespace BookStoreFullStackNg.Api.Controllers
                 {
                     throw new BadRequestException("Avatar image file size should not exceed 2 MB");
                 }
-                if (_cloudinaryService != null)
-                {
-                    var uploadResult = await _cloudinaryService.UploadImageAsync(authorToCreate.AvatarFile, "authors", 300, 300);
-                    authorToCreate.AvatarUrl = uploadResult.Url;
-                    authorToCreate.AvatarPublicId = uploadResult.PublicId;
-                }
+                var uploadResult = await _cloudinaryService.UploadImageAsync(authorToCreate.AvatarFile, "authors", 300, 300);
+                authorToCreate.AvatarUrl = uploadResult.Url;
+                authorToCreate.AvatarPublicId = uploadResult.PublicId;
             }
 
             var author = _mapper.Map<Author>(authorToCreate);
@@ -121,19 +118,16 @@ namespace BookStoreFullStackNg.Api.Controllers
                 {
                     throw new BadRequestException("Avatar image file size should not exceed 2 MB");
                 }
-                if (_cloudinaryService != null)
+                var uploadResult = await _cloudinaryService.UploadImageAsync(authorToUpdate.AvatarFile, "authors", 300, 300);
+
+                // If old image existed, delete it
+                if (!string.IsNullOrEmpty(existingAuthor.AvatarPublicId))
                 {
-                    var uploadResult = await _cloudinaryService.UploadImageAsync(authorToUpdate.AvatarFile, "authors", 300, 300);
-
-                    // If old image existed, delete it
-                    if (!string.IsNullOrEmpty(existingAuthor.AvatarPublicId))
-                    {
-                        await _cloudinaryService.DeleteImageAsync(existingAuthor.AvatarPublicId);
-                    }
-
-                    authorToUpdate.AvatarUrl = uploadResult.Url;
-                    authorToUpdate.AvatarPublicId = uploadResult.PublicId;
+                    await _cloudinaryService.DeleteImageAsync(existingAuthor.AvatarPublicId);
                 }
+
+                authorToUpdate.AvatarUrl = uploadResult.Url;
+                authorToUpdate.AvatarPublicId = uploadResult.PublicId;
             }
             else
             {
