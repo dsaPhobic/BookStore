@@ -60,49 +60,49 @@ import { Author } from "../data/author.model";
             </div>
           </div>
           <div class="avatar-upload-action">
-            <label class="upload-label">Ảnh đại diện Tác giả (Cloudinary):</label>
+            <label class="upload-label">Author avatar (Cloudinary):</label>
             <input type="file" accept="image/*" (change)="onFileSelected($event)" />
-            <small class="hint">Khuyến nghị ảnh vuông (tối đa 2MB)</small>
+            <small class="hint">Square image recommended (max 2MB)</small>
           </div>
         </div>
 
         <div class="form-row">
           <mat-form-field appearance="fill" class="flex-1">
-            <mat-label>Tên tác giả / Bút danh *</mat-label>
+            <mat-label>Author name / Pen name *</mat-label>
             <input type="text" matInput formControlName="authorName" />
           </mat-form-field>
 
           <mat-form-field appearance="fill" class="flex-1">
-            <mat-label>Tên thật (nếu có)</mat-label>
+            <mat-label>Real name (if any)</mat-label>
             <input type="text" matInput formControlName="originalName" />
           </mat-form-field>
         </div>
 
         <div class="form-row">
           <mat-form-field appearance="fill" class="flex-1">
-            <mat-label>Quốc tịch</mat-label>
-            <input type="text" matInput formControlName="nationality" placeholder="VD: Việt Nam, Nhật Bản..." />
+            <mat-label>Nationality</mat-label>
+            <input type="text" matInput formControlName="nationality" placeholder="e.g. Vietnam, Japan..." />
           </mat-form-field>
 
           <mat-form-field appearance="fill" class="flex-1">
-            <mat-label>Ngày sinh</mat-label>
+            <mat-label>Date of birth</mat-label>
             <input type="date" matInput formControlName="birthDate" />
           </mat-form-field>
         </div>
 
         <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Tiểu sử & Thành tựu (Bio)</mat-label>
-          <textarea matInput formControlName="bio" rows="3" placeholder="Tóm tắt sự nghiệp, tác phẩm tiêu biểu..."></textarea>
+          <mat-label>Biography & Achievements (Bio)</mat-label>
+          <textarea matInput formControlName="bio" rows="3" placeholder="Summary of career, notable works..."></textarea>
         </mat-form-field>
 
         <div class="checkbox-row">
           <mat-checkbox formControlName="isFeatured" color="primary">
-            Đánh dấu là Tác giả nổi bật (Featured Author)
+            Mark as Featured Author
           </mat-checkbox>
         </div>
 
         <div mat-dialog-actions align="end" class="dialog-actions">
-          <button mat-button (click)="onCanceled()">Đóng</button>
+          <button mat-button (click)="onCanceled()">Close</button>
           <button
             mat-raised-button
             color="primary"
@@ -110,7 +110,7 @@ import { Author } from "../data/author.model";
             [disabled]="authorForm.invalid"
             cdkFocusInitial
           >
-            Lưu thông tin
+            Save
           </button>
         </div>
       </form>

@@ -41,16 +41,16 @@ import { MatIconModule } from "@angular/material/icon";
   template: `
     <div class="header-container">
       <div>
-        <h1 class="page-title">Quản trị Tác giả & Danh mục (PIM)</h1>
-        <p class="subtitle">Quản lý hồ sơ tác giả, ảnh chân dung Cloudinary và liên kết tác phẩm</p>
+        <h1 class="page-title">Author & Category Management (PIM)</h1>
+        <p class="subtitle">Manage author profiles, Cloudinary portrait images, and book links</p>
       </div>
       <button
         type="button"
-        (click)="onAddUpdate('Thêm mới', null)"
+        (click)="onAddUpdate('Add', null)"
         mat-raised-button
         color="primary"
       >
-        <mat-icon>add</mat-icon> Thêm Tác giả
+        <mat-icon>add</mat-icon> Add Author
       </button>
     </div>
 
@@ -103,7 +103,7 @@ export class AuthorComponent implements OnDestroy {
   error$ = this.store.select(selectAuthorError);
 
   onEdit(author: Author) {
-    this.onAddUpdate("Chỉnh sửa", author);
+    this.onAddUpdate("Edit", author);
   }
 
   onViewBooks(author: Author) {
@@ -115,7 +115,7 @@ export class AuthorComponent implements OnDestroy {
 
   onAddUpdate(action: string, author: Author | null = null) {
     const dialogRef = this.dialog.open(AuthorDialogComponent, {
-      data: { author, title: action + " Tác giả" },
+      data: { author, title: action + " Author" },
       width: "560px",
     });
 
@@ -140,7 +140,7 @@ export class AuthorComponent implements OnDestroy {
   onDelete(author: Author) {
     if (
       window.confirm(
-        `Bạn có chắc chắn muốn xóa tác giả: "${author.authorName}"?`
+        `Are you sure you want to delete the author "${author.authorName}"?`
       )
     ) {
       this.store.dispatch(authorActions.deleteAuthor({ id: author.id }));

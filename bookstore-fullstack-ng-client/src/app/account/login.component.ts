@@ -153,7 +153,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     .pipe(
       tap((d) => {
         if (!d) return;
-        let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.";
+        let errorMessage = "Login failed. Please check your email and password.";
         if (d.error) {
           try {
             const parsed = typeof d.error === "string" ? JSON.parse(d.error) : d.error;
@@ -168,7 +168,7 @@ export class LoginComponent implements OnInit, OnDestroy {
             }
           }
         } else if (d.status === 400 || d.status === 401) {
-          errorMessage = "Tài khoản hoặc mật khẩu không chính xác.";
+          errorMessage = "Incorrect email or password.";
         } else if (d.message) {
           errorMessage = d.message;
         }
