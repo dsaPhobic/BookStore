@@ -38,6 +38,14 @@ INSERT INTO "Author" ("AuthorName", "CreatedAt", "IsFeatured") SELECT 'Yuval Noa
 INSERT INTO "Author" ("AuthorName", "CreatedAt", "IsFeatured") SELECT 'Robert C. Martin', datetime('now'), 0 WHERE NOT EXISTS (SELECT 1 FROM "Author" WHERE "AuthorName" = 'Robert C. Martin');
 INSERT INTO "Author" ("AuthorName", "CreatedAt", "IsFeatured") SELECT 'Joshua Bloch', datetime('now'), 0 WHERE NOT EXISTS (SELECT 1 FROM "Author" WHERE "AuthorName" = 'Joshua Bloch');
 
+-- Keep existing user data and stop adding candidates once the catalog reaches 40.
+CREATE TEMP TRIGGER "LimitBookSeedToForty"
+BEFORE INSERT ON "Book"
+WHEN (SELECT COUNT(*) FROM "Book") >= 40
+BEGIN
+    SELECT RAISE(IGNORE);
+END;
+
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT '1984', 'A dystopian classic about surveillance, truth, and individual freedom.', 289, 1949, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = '1984');
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT 'Animal Farm', 'A political fable about power, revolution, and corruption.', 219, 1945, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = 'Animal Farm');
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT 'The Hobbit', 'A reluctant hobbit joins an adventure to reclaim a lost kingdom.', 459, 1937, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = 'The Hobbit');
@@ -68,6 +76,8 @@ INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", 
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT 'Homo Deus', 'An exploration of possible futures for humanity and technology.', 479, 2015, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = 'Homo Deus');
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT 'Clean Code', 'Practical principles for writing readable and maintainable software.', 549, 2008, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = 'Clean Code');
 INSERT INTO "Book" ("Title", "Description", "Price", "PublishedYear", "Status", "CreatedAt") SELECT 'Effective Java', 'Best practices for designing robust and maintainable Java programs.', 619, 2018, 'Active', datetime('now') WHERE NOT EXISTS (SELECT 1 FROM "Book" WHERE "Title" = 'Effective Java');
+
+DROP TRIGGER "LimitBookSeedToForty";
 
 -- Primary author and genre for each seeded title.
 CREATE TEMP TABLE "SeedBookLinks" ("Title" TEXT, "AuthorName" TEXT, "GenreName" TEXT);
