@@ -28,6 +28,9 @@ public class UserNameUserIdProvider : IUserIdProvider
     public string? GetUserId(HubConnectionContext connection)
     {
         return connection.User?.FindFirst(ClaimTypes.Name)?.Value
+               ?? connection.User?.FindFirst("unique_name")?.Value
+               ?? connection.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+               ?? connection.User?.FindFirst("sub")?.Value
                ?? connection.User?.Identity?.Name;
     }
 }

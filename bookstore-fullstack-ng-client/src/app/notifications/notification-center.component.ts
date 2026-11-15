@@ -52,7 +52,11 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
       >
     </button>
 
-    <mat-menu #notificationMenu="matMenu" xPosition="before">
+    <mat-menu
+      #notificationMenu="matMenu"
+      xPosition="before"
+      panelClass="notification-menu"
+    >
       <div class="panel">
         <div class="panel-head">
           <span class="panel-title">Order updates</span>
@@ -76,29 +80,31 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
           </p>
         </div>
 
-        <button
-          *ngFor="let notification of notifications()"
-          mat-menu-item
-          type="button"
-          class="notification-item"
-          [class.is-unread]="!notification.read"
-          (click)="open(notification)"
-        >
-          <span
-            class="status-dot"
-            [ngClass]="statusClass(notification.orderStatus)"
-          ></span>
-          <span class="notification-body">
-            <span class="notification-message">
-              Order #{{ notification.orderId }} is now
-              {{ notification.orderStatusLabel }}
+        <div class="notification-list" *ngIf="notifications().length > 0">
+          <button
+            *ngFor="let notification of notifications()"
+            mat-menu-item
+            type="button"
+            class="notification-item"
+            [class.is-unread]="!notification.read"
+            (click)="open(notification)"
+          >
+            <span
+              class="status-dot"
+              [ngClass]="statusClass(notification.orderStatus)"
+            ></span>
+            <span class="notification-body">
+              <span class="notification-message">
+                Order #{{ notification.orderId }} is now
+                {{ notification.orderStatusLabel }}
+              </span>
+              <span class="notification-meta">
+                Changed from {{ notification.previousStatusLabel }},
+                {{ timeAgo(notification.receivedAt) }}
+              </span>
             </span>
-            <span class="notification-meta">
-              Changed from {{ notification.previousStatusLabel }},
-              {{ timeAgo(notification.receivedAt) }}
-            </span>
-          </span>
-        </button>
+          </button>
+        </div>
 
         <mat-divider *ngIf="notifications().length > 0"></mat-divider>
 
@@ -120,8 +126,24 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
       }
 
       .panel {
-        width: 340px;
-        max-width: calc(100vw - 32px);
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .notification-list {
+        max-height: min(380px, 60vh);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+      }
+
+      .notification-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .notification-list::-webkit-scrollbar-thumb {
+        background: var(--bs-border);
+        border-radius: 999px;
       }
 
       .panel-head {
@@ -185,9 +207,10 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
       }
 
       .notification-item.mat-mdc-menu-item {
+        align-items: flex-start;
         height: auto;
         min-height: 0;
-        padding: 11px 16px;
+        padding: 10px 16px;
         line-height: 1.4;
         white-space: normal;
         border-radius: 0;
@@ -201,6 +224,7 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
         flex: 0 0 auto;
         width: 8px;
         height: 8px;
+        margin-top: 5px;
         margin-right: 12px;
         border-radius: 50%;
         background: #8b8f9c;
@@ -208,20 +232,24 @@ import { getOrderStatusCssClass } from "../order/data/order-status";
 
       .notification-item .notification-body {
         display: flex;
+        flex: 1 1 auto;
         flex-direction: column;
         gap: 2px;
+        min-width: 0;
       }
 
       .notification-item .notification-message {
         font-size: 13px;
         font-weight: 600;
         color: var(--bs-ink-dark);
+        overflow-wrap: anywhere;
       }
 
       .notification-item .notification-meta {
         font-size: 11.5px;
         font-weight: 500;
         color: var(--bs-muted);
+        overflow-wrap: anywhere;
       }
 
       .panel-footer.mat-mdc-menu-item {

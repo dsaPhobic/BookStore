@@ -460,6 +460,17 @@ app-root .content > :not(router-outlet) > h2:first-child {
   box-shadow: var(--bs-shadow-lg) !important;
 }
 
+/* The notification feed is wider than Material's 280px menu default. */
+.mat-mdc-menu-panel.notification-menu {
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  overflow-x: hidden;
+}
+
+.mat-mdc-menu-panel.notification-menu .mat-mdc-menu-content {
+  padding: 0;
+}
+
 .mat-mdc-menu-item .mat-icon {
   color: var(--bs-muted);
 }
