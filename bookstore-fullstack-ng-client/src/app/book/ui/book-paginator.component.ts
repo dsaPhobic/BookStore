@@ -15,7 +15,8 @@ import { PageSelectorModel } from "../../common/page-selector.model";
   template: `
     <mat-paginator
       [length]="totalRecords"
-      [pageSize]="10"
+      [pageIndex]="currentPage - 1"
+      [pageSize]="pageSize"
       [pageSizeOptions]="[5, 10, 25, 50, 100]"
       aria-label="Select page"
       (page)="onPageSelect($event)"
@@ -34,6 +35,8 @@ import { PageSelectorModel } from "../../common/page-selector.model";
 export class BookPaginatorComponent {
   @Output() pageSelect = new EventEmitter<PageSelectorModel>();
   @Input({ required: true }) totalRecords!: number;
+  @Input() currentPage = 1;
+  @Input() pageSize = 10;
 
   onPageSelect(e: PageEvent) {
     const page = e.pageIndex + 1;
