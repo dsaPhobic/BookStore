@@ -100,7 +100,7 @@ import {
           </th>
           <td mat-cell *matCellDef="let element">
             <strong class="total-amount">{{
-              element.total | currency : "INR"
+              element.total | currency : "USD"
             }}</strong>
           </td>
         </ng-container>
