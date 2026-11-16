@@ -44,7 +44,7 @@ import { ConfirmationService } from "../common/confirmation.service";
 
     <ng-container *ngIf="cartItems$ | async as cartItems">
     <p class="cart-error" *ngIf="error$ | async as cartError" role="alert">
-      {{ cartError.error?.message || cartError.error?.Message || "Unable to update the cart. Please try again." }}
+      {{ cartError.error?.message || "Unable to update the cart. Please try again." }}
     </p>
     <ng-container *ngIf="cartItems.length > 0; else noitems">
         <div class="cart-grid">

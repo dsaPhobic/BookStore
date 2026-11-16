@@ -131,18 +131,8 @@ interface BookDetailResult {
             <span class="detail-price">
               \${{ currentBook.price | number: "1.2-2" }}
             </span>
-            <span
-              class="stock-status"
-              [class.out-of-stock]="currentBook.stockQuantity < 1"
-              [class.low-stock]="currentBook.stockQuantity > 0 && currentBook.stockQuantity <= 5"
-            >
-              {{
-                currentBook.stockQuantity > 5
-                  ? currentBook.stockQuantity + " in stock"
-                  : currentBook.stockQuantity > 0
-                  ? "Only " + currentBook.stockQuantity + " left in stock!"
-                  : "Out of stock"
-              }}
+            <span class="stock-status" [class.out-of-stock]="currentBook.stockQuantity < 1">
+              {{ currentBook.stockQuantity > 0 ? currentBook.stockQuantity + " in stock" : "Out of stock" }}
             </span>
           </div>
 
@@ -158,8 +148,8 @@ interface BookDetailResult {
               [disabled]="currentBook.stockQuantity < 1"
               class="buy-btn"
             >
-              <mat-icon>{{ currentBook.stockQuantity > 0 ? "shopping_bag" : "remove_shopping_cart" }}</mat-icon>
-              {{ currentBook.stockQuantity > 0 ? "Add to Shopping Cart" : "Out of Stock" }}
+              <mat-icon>shopping_bag</mat-icon>
+              Add to Shopping Cart
             </button>
             <app-wishlist-button [book]="currentBook" />
             <a mat-stroked-button routerLink="/cart" class="view-cart-btn">View Cart</a>
@@ -329,11 +319,6 @@ interface BookDetailResult {
 
       .stock-status.out-of-stock {
         color: #b91c1c;
-      }
-
-      .stock-status.low-stock {
-        color: #c2410c;
-        font-weight: 700;
       }
 
       .detail-price {

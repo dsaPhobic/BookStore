@@ -62,7 +62,6 @@ export const cartReducers = createReducer(
     ...state,
     error,
     loading: false,
-    // Keep cartItems unchanged so the component's ngOnChanges can revert the input
   })),
   on(CartActions.deleteCartItem, (state, { id }) => ({
     ...state,
